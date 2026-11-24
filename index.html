@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airo</title>
+<meta name="description" content="Airo: switcher de vídeo ao vivo para igrejas, com preview e program, transmissão, letras e slides numa tela só. macOS, Windows e Linux.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Airo">
+<meta property="og:title" content="Airo: switcher de vídeo ao vivo para igrejas">
+<meta property="og:description" content="Câmeras, letras, slides e transmissão numa tela só, com o fluxo de preview e program que a equipe de mídia já conhece.">
+<meta property="og:url" content="https://airo-app.github.io/">
+<meta property="og:image" content="https://airo-app.github.io/img/principal.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0B0C0F">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: título largo de ponta a ponta sobre um switcher que funciona sozinho; abaixo, faixas calmas.
+   Verde (preview) e vermelho (no ar) são o código de cor; ações do site em botão claro, azul só no app. */
+:root {
+  color-scheme: dark;
+  --bg: #0B0C0F;
+  --surface: #14161B;
+  --card: #1A1D23;
+  --field: #0E1013;
+  --line: #23262E;
+  --line-2: #333844;
+  --fg: #E6E8EC;
+  --fg-2: #9BA1AC;
+  --fg-3: #7D8490;
+  --accent: #4F8BFF;
+  --accent-text: #8AB4FF;
+  --primary: #3B6FE0;
+  --selected: #17233D;
+  --live: #F04438;
+  --live-label: #C8261B;
+  --pvw: #22C55E;
+  --pvw-label: #15803D;
+  --ok-text: #4ADE80;
+  --warn-text: #FACC15;
+  --on-solid: #FFFFFF;
+  --font-display: "Archivo", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r-window: 14px;
+  --r-card: 10px;
+  --r-btn: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; z-index: 10;
+  height: env(safe-area-inset-top, 0px); background: var(--bg);
+}
+h1, h2, h3, p, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 4px; }
+
+.wrap {
+  max-width: 1160px; margin-inline: auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font: 600 11.5px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fg-2); display: flex; align-items: center; gap: 10px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--live); flex: none; }
+.dot.green { background: var(--pvw); }
+.dot.blue { background: var(--accent); }
+.dot.idle { background: var(--line-2); }
+
+/* Navegação */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 20px/1 var(--font-body); letter-spacing: -0.03em; }
+.brand svg { width: 24px; height: auto; }
+.nav-links { display: flex; gap: 26px; margin-left: auto; margin-right: -4px; font-size: 14px; color: var(--fg-2); }
+.nav-links a:hover { color: var(--fg); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 20px; border-radius: var(--r-btn);
+  font: 600 15px/1 var(--font-body); border: 1px solid transparent; white-space: nowrap;
+  transition: filter .15s, background .15s, border-color .15s;
+}
+.btn.primary { background: var(--fg); color: var(--bg); }
+.btn.ghost { background: #1E2128; border-color: var(--line-2); color: #C9CDD4; }
+.btn:hover { filter: brightness(1.15); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.small { min-height: 36px; padding: 0 14px; font-size: 13.5px; }
+.lang { display: flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 2px; }
+.lang button { min-width: 40px; min-height: 32px; border: 0; background: transparent; border-radius: 999px; font: 600 12px/1 var(--font-mono); color: var(--fg-2); }
+.lang button[aria-pressed="true"] { background: var(--line-2); color: var(--fg); }
+
+/* Hero */
+.hero { padding-block: 60px 0; max-width: 1320px; }
+.hero-head { display: grid; gap: 36px; }
+h1 {
+  font: 700 clamp(34px, 7.2vw, 112px)/0.94 var(--font-display); font-stretch: 112%;
+  letter-spacing: -0.045em; margin-top: 26px;
+}
+h1 .line { display: block; animation: rise .8s cubic-bezier(.2, .7, .2, 1) both; }
+h1 .line + .line { animation-delay: .08s; }
+h1 .pv { color: var(--pvw); }
+h1 em { font-style: normal; color: var(--live); white-space: nowrap; }
+.hero-sub {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 48px; align-items: end;
+  animation: rise .8s .16s cubic-bezier(.2, .7, .2, 1) both;
+}
+.lede { font-size: 18.5px; color: var(--fg-2); max-width: 54ch; }
+.lede strong { color: var(--fg); font-weight: 500; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+@keyframes rise { from { transform: translateY(26px); opacity: .25; } }
+@keyframes stage-in { from { transform: translateY(44px) scale(.97); opacity: .3; } }
+
+/* Console (switcher interativo) */
+.stage { position: relative; margin-top: 52px; animation: stage-in 1s .22s cubic-bezier(.2, .7, .2, 1) both; }
+.stage::before {
+  content: ""; position: absolute; inset: 12% 8% -6%; z-index: 0; pointer-events: none;
+  background: radial-gradient(60% 60% at 72% 30%, rgba(240, 68, 56, .28), transparent 70%),
+              radial-gradient(50% 60% at 26% 30%, rgba(34, 197, 94, .17), transparent 70%);
+  filter: blur(30px);
+}
+.console {
+  position: relative; z-index: 1; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-window); overflow: hidden;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .9);
+}
+.c-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.c-bar .brand { font-size: 15px; }
+.c-bar .brand svg { width: 17px; }
+.c-proj { color: var(--fg); font-weight: 500; }
+.c-meta { color: var(--fg-3); font-size: 12px; }
+.c-live {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  background: var(--live-label); color: var(--on-solid);
+  font: 600 12px/1 var(--font-mono); padding: 7px 10px; border-radius: 6px;
+}
+.c-live .dot { background: var(--on-solid); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.c-main { display: grid; grid-template-columns: 1fr 92px 1fr; gap: 14px; padding: 16px; align-items: center; }
+.monitor { min-width: 0; }
+.m-label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12.5px; color: var(--fg-2); }
+.tag { font: 600 10.5px/1 var(--font-mono); letter-spacing: .1em; padding: 5px 7px; border-radius: 5px; color: var(--on-solid); }
+.tag.pvw { background: var(--pvw-label); }
+.tag.pgm { background: var(--live-label); }
+.m-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen {
+  position: relative; aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden;
+  border-radius: 8px; background: #000; border: 2px solid var(--line-2);
+}
+.screen.pvw { border-color: var(--pvw); }
+.screen.pgm { border-color: var(--live); }
+.screen svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.screen .ghost-scene { transition: opacity .55s ease; }
+.lower {
+  position: absolute; left: 5%; bottom: 9%; max-width: 70%;
+  background: rgba(11, 12, 15, .86); border-radius: 6px; padding: 7px 12px;
+  font-size: clamp(9px, 1.25vw, 14px); line-height: 1.3;
+  transform: translateY(8px); opacity: 0; transition: opacity .3s, transform .3s;
+}
+.lower.on { opacity: 1; transform: none; }
+.lower b { display: block; font-weight: 600; color: var(--on-solid); }
+.lower span { color: #C9CDD4; font-size: .86em; }
+
+.trans { display: flex; flex-direction: column; gap: 8px; }
+.t-btn {
+  min-height: 44px; border-radius: var(--r-btn); background: #1E2128;
+  border: 1px solid var(--line-2); font: 600 13px/1 var(--font-mono); letter-spacing: .06em; color: #C9CDD4;
+}
+.t-btn:hover { filter: brightness(1.2); }
+.t-btn.cut { background: var(--live-label); border-color: transparent; color: var(--on-solid); min-height: 56px; font-size: 15px; }
+.t-btn[aria-pressed="true"] { background: var(--selected); border-color: var(--accent); color: var(--on-solid); }
+
+.c-inputs { border-top: 1px solid var(--line); padding: 14px 16px 16px; background: #101216; }
+.c-hint { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; font-size: 12.5px; color: var(--fg-3); margin-bottom: 12px; }
+.c-hint b { color: var(--fg-2); font-weight: 500; }
+.inputs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.in {
+  text-align: left; background: var(--card); border: 1px solid #262A33; border-radius: var(--r-card);
+  padding: 0; overflow: hidden; display: flex; flex-direction: column;
+}
+.in:hover { border-color: var(--line-2); }
+.in .thumb { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.in .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.in .tally {
+  position: absolute; top: 6px; right: 6px; font: 600 9.5px/1 var(--font-mono); letter-spacing: .08em;
+  padding: 4px 6px; border-radius: 4px; color: var(--on-solid); display: none;
+}
+.in.is-pgm { border-color: var(--live); box-shadow: 0 0 0 1px var(--live); }
+.in.is-pvw { border-color: var(--pvw); box-shadow: 0 0 0 1px var(--pvw); }
+.in.is-pgm .tally { display: block; background: var(--live-label); }
+.in.is-pvw .tally { display: block; background: var(--pvw-label); }
+.in .meta { display: flex; gap: 8px; align-items: baseline; padding: 8px 10px 9px; font-size: 12.5px; min-width: 0; }
+.in .n { font: 600 11.5px/1 var(--font-mono); color: var(--fg-3); }
+.in .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Seções */
+section { padding-block: 112px 0; }
+.sec-head { display: grid; gap: 18px; max-width: 760px; }
+h2 { font: 700 clamp(28px, 3.9vw, 50px)/1.04 var(--font-display); font-stretch: 110%; letter-spacing: -0.035em; text-wrap: balance; }
+.sec-head p { color: var(--fg-2); font-size: 17px; max-width: 58ch; }
+h3 { font: 600 19px/1.25 var(--font-display); font-stretch: 106%; letter-spacing: -0.015em; }
+
+/* Princípios */
+.principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 56px; border-top: 1px solid var(--line); }
+.principles li { padding: 28px 28px 0 0; display: grid; gap: 10px; align-content: start; }
+.principles li + li { padding-left: 28px; border-left: 1px solid var(--line); }
+.principles p { color: var(--fg-2); font-size: 15px; }
+.swatches { display: flex; gap: 6px; height: 20px; align-items: center; }
+.swatches i { width: 26px; height: 8px; border-radius: 4px; background: var(--line-2); }
+
+/* Recursos */
+.bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-top: 56px; }
+.cell {
+  grid-column: span 2; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-window);
+  padding: 26px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.cell.wide { grid-column: span 4; }
+.cell.half { grid-column: span 3; }
+.cell p { color: var(--fg-2); font-size: 15px; }
+.cell .vis { margin-top: auto; padding-top: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: #C9CDD4;
+  background: var(--card); border: 1px solid #262A33; border-radius: 999px; padding: 7px 13px;
+}
+.chip svg { width: 15px; height: 15px; color: var(--accent-text); flex: none; }
+.shots { margin-top: 48px; display: grid; gap: 18px; }
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; }
+.tab {
+  flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px; background: transparent;
+  border: 1px solid var(--line-2); color: var(--fg-2); font: 500 14px/1 var(--font-body);
+}
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: transparent; }
+.shot-frame {
+  border: 1px solid var(--line-2); border-radius: var(--r-window); overflow: hidden; background: var(--surface);
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .9); aspect-ratio: 1600 / 1000; max-width: 100%;
+}
+.shot-frame img { display: block; width: 100%; height: auto; }
+.shot-cap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; color: var(--fg-2); font-size: 15px; }
+.codecs { display: flex; flex-wrap: wrap; gap: 6px; }
+.codecs span { font: 500 12px/1 var(--font-mono); color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 8px; }
+
+/* Controle remoto */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.split > * { min-width: 0; }
+.list { display: grid; gap: 18px; margin-top: 28px; }
+.list li { display: grid; grid-template-columns: 22px 1fr; gap: 14px; color: var(--fg-2); font-size: 15.5px; }
+.list svg { width: 20px; height: 20px; color: var(--accent-text); margin-top: 3px; }
+.list b { color: var(--fg); font-weight: 500; }
+.devices { position: relative; display: flex; justify-content: center; gap: 20px; align-items: flex-end; }
+.phone { width: 250px; max-width: 100%; background: var(--bg); border: 1px solid var(--line-2); border-radius: 34px; padding: 12px; box-shadow: 0 40px 80px -40px rgba(0,0,0,.9); }
+.phone-in { background: var(--surface); border-radius: 24px; overflow: hidden; border: 1px solid var(--line); }
+.p-top { display: flex; align-items: center; gap: 8px; padding: 14px; font-size: 13px; border-bottom: 1px solid var(--line); }
+.p-top .r { margin-left: auto; font: 500 11px/1 var(--font-mono); color: var(--ok-text); }
+.p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+.p-in { border: 1px solid #262A33; background: var(--card); border-radius: 8px; padding: 12px 10px; font-size: 12px; display: grid; gap: 4px; }
+.p-in .n { font: 600 11px/1 var(--font-mono); color: var(--fg-3); }
+.p-in.pgm { border-color: var(--live); }
+.p-in.pvw { border-color: var(--pvw); }
+.p-cut { margin: 0 12px 12px; background: var(--live-label); color: var(--on-solid); border-radius: 8px; text-align: center; font: 600 14px/44px var(--font-mono); letter-spacing: .06em; }
+.p-tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); font-size: 11px; color: var(--fg-3); text-align: center; }
+.p-tabs span { padding: 12px 0; }
+.p-tabs .on { color: var(--accent-text); }
+.api { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 48px; margin-top: 56px; align-items: start; }
+.specs { border-top: 1px solid var(--line); }
+.specs li { padding: 18px 0; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.specs .k { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; }
+.specs b { font: 600 16.5px/1.3 var(--font-display); font-stretch: 106%; }
+.specs code { font: 500 12.5px/1.4 var(--font-mono); color: var(--accent-text); overflow-wrap: anywhere; }
+.specs p { color: var(--fg-2); font-size: 14.5px; }
+.term { background: var(--field); border: 1px solid var(--line-2); border-radius: var(--r-window); overflow: hidden; box-shadow: 0 40px 90px -50px rgba(0, 0, 0, .9); }
+.term-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 10px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.term-tabs .tab { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.term-tabs, .term pre { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.term-desc { padding: 16px 16px 0; color: var(--fg-2); font-size: 14px; }
+.term pre { margin: 0; padding: 12px 16px 18px; overflow-x: auto; font: 500 12.5px/1.7 var(--font-mono); color: #C9CDD4; min-height: 15em; }
+.events { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+.events span { font: 500 11.5px/1 var(--font-mono); color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 6px 8px; }
+.events .ev-label { border: 0; padding-left: 0; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+
+/* Preços */
+.pricing h2 { margin-top: 18px; }
+.price-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 56px; align-items: start; }
+.pricing .lede { margin-top: 24px; }
+.steps { display: grid; margin-top: 44px; border-top: 1px solid var(--line); }
+.steps li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.steps .tag { justify-self: start; margin-top: 4px; }
+.steps p { color: var(--fg-2); font-size: 15px; margin-top: 6px; }
+.price-card { background: var(--surface); border: 1px solid var(--line-2); border-radius: 20px; padding: clamp(24px, 4vw, 40px); display: grid; gap: 24px; box-shadow: 0 40px 90px -50px rgba(0, 0, 0, .9); }
+.price-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 700 clamp(46px, 6vw, 76px)/1 var(--font-display); font-stretch: 112%; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.price small { font: 500 16px/1 var(--font-body); font-stretch: 100%; letter-spacing: 0; color: var(--fg-2); }
+.price-note { color: var(--fg-2); font-size: 15px; }
+.incl { display: grid; gap: 11px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 15px; color: #C9CDD4; }
+.incl li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.incl .dot { transform: translateY(-1px); }
+.incl-title { font: 600 11.5px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-2); }
+.price-card .btn { width: 100%; }
+.dl-note { flex-basis: 100%; color: var(--fg-2); font-size: 14.5px; }
+.dl-note a, .price-note a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.faq { margin-top: 104px; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 56px; align-items: start; }
+.faq-list { border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 20px 0; min-height: 44px; font: 600 17px/1.3 var(--font-display); font-stretch: 106%; letter-spacing: -0.01em;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; font: 500 22px/1 var(--font-mono); color: var(--fg-3); }
+.faq details[open] summary::after { content: "−"; }
+.faq summary:hover::after { color: var(--fg); }
+.faq details p { color: var(--fg-2); font-size: 15.5px; padding: 0 40px 22px 0; max-width: 60ch; }
+
+/* Docs */
+[data-l="pt"] { display: none !important; }
+html[lang="pt-BR"] [data-l="pt"] { display: revert !important; }
+html[lang="pt-BR"] [data-l="en"] { display: none !important; }
+.docs { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px; padding-block: 56px 0; align-items: start; }
+.doc-nav { position: sticky; top: calc(88px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; font-size: 14.5px; }
+.doc-nav a { padding: 9px 12px; border-radius: 8px; color: var(--fg-2); }
+.doc-nav a:hover { color: var(--fg); }
+.doc-nav a[aria-current="page"] { background: var(--selected); color: var(--fg); }
+.doc-nav .grp { margin: 16px 12px 4px; font: 600 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+.doc-body { min-width: 0; max-width: 800px; }
+.doc-body .doc-title { font-size: clamp(30px, 4vw, 46px); line-height: 1.04; letter-spacing: -0.035em; margin-top: 16px; text-wrap: balance; }
+.doc-body .doc-lede { font-size: 18px; color: var(--fg-2); margin-top: 18px; }
+.doc-body h2 { font-size: 24px; margin-top: 52px; display: flex; align-items: center; gap: 12px; text-wrap: wrap; }
+.doc-body h2 .num { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--live-label); color: var(--on-solid); font: 600 14px/1 var(--font-mono); letter-spacing: 0; }
+.doc-body p, .doc-body li { color: #C9CDD4; font-size: 16px; line-height: 1.65; max-width: 70ch; }
+.doc-body p { margin-top: 14px; }
+.doc-body ul, .doc-body ol { margin-top: 14px; padding-left: 22px; display: grid; gap: 8px; }
+.doc-body ul { list-style: disc; }
+.doc-body ol { list-style: decimal; }
+.doc-body li::marker { color: var(--fg-3); }
+.doc-body b { color: var(--fg); font-weight: 600; }
+.doc-body code { font: 500 .86em/1.4 var(--font-mono); background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; overflow-wrap: anywhere; }
+.doc-code { margin-top: 18px; background: var(--field); border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; }
+.doc-code .cap { padding: 9px 16px; border-bottom: 1px solid var(--line); background: var(--surface); font: 500 11.5px/1 var(--font-mono); color: var(--fg-3); }
+.doc-code pre { margin: 0; padding: 14px 16px 16px; overflow-x: auto; font: 500 12.5px/1.7 var(--font-mono); color: #C9CDD4; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.doc-note { margin-top: 18px; border: 1px solid var(--line-2); background: var(--surface); border-radius: 10px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: var(--fg-2); max-width: 70ch; }
+.doc-table { margin-top: 18px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; scrollbar-width: thin; }
+.doc-table table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
+.doc-table th { text-align: left; padding: 10px 14px; background: var(--surface); font: 600 11px/1.3 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); }
+.doc-table td { padding: 11px 14px; border-top: 1px solid var(--line); color: #C9CDD4; vertical-align: top; line-height: 1.5; }
+.doc-flow { margin-top: 28px; display: flex; align-items: stretch; gap: 6px; }
+.doc-flow .node { flex: 1 1 0; min-width: 0; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 12px; display: grid; gap: 4px; align-content: start; }
+.doc-flow .node b { font: 600 14px/1.3 var(--font-display); }
+.doc-flow .node small { font-size: 12.5px; color: var(--fg-2); line-height: 1.4; }
+.doc-flow .arrow { align-self: center; color: var(--fg-3); font: 500 16px/1 var(--font-mono); }
+.doc-next { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); }
+.doc-next a { color: var(--accent-text); font-weight: 500; }
+.api-more { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 32px; }
+.api-more a.link { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; }
+.nav-links a[aria-current="page"] { color: var(--fg); }
+
+/* Baixar */
+.open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 48px; }
+.fact { border-top: 1px solid var(--line); padding-top: 20px; display: grid; gap: 6px; }
+.fact b { font: 700 22px/1.2 var(--font-display); font-stretch: 110%; letter-spacing: -0.025em; }
+.fact span { color: var(--fg-2); font-size: 14.5px; }
+.cta {
+  margin-top: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+  padding: clamp(28px, 5vw, 64px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center;
+}
+.cta > * { min-width: 0; }
+.cta p { color: var(--fg-2); margin-top: 14px; max-width: 44ch; }
+.dl { display: flex; flex-wrap: wrap; gap: 12px; }
+.dl-item { display: grid; gap: 6px; flex: 1 1 100%; }
+.dl-item .btn { justify-self: start; }
+.dl-item .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; filter: none; }
+.cta p.dl-meta { margin-top: 0; font-size: 13.5px; color: var(--fg-3); max-width: none; }
+.cta p.dl-all { margin-top: 0; font-size: 14.5px; }
+.dl-all a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.first-run { margin-top: 40px; }
+.first-run h3 { font: 700 20px/1.2 var(--font-display); font-stretch: 110%; letter-spacing: -0.02em; }
+.first-run-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.first-run-grid > div { border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.first-run-grid p { color: var(--fg-2); font-size: 14.5px; }
+.first-run-grid code, .first-run-grid pre { font-family: var(--font-mono); font-size: 12.5px; }
+.first-run-grid pre { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; overflow-x: auto; color: var(--fg); }
+
+footer { margin-top: 96px; border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--fg-3); font-size: 13.5px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; }
+footer .brand { color: var(--fg); font-size: 16px; }
+footer .brand svg { width: 18px; }
+footer nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 20px; }
+footer a:hover { color: var(--fg); }
+
+@media (max-width: 960px) {
+  .hero-sub, .split, .cta, .price-grid, .faq, .api { grid-template-columns: 1fr; gap: 28px; }
+  .docs { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; }
+  .doc-nav { position: static; display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; scrollbar-width: thin; }
+  .doc-nav a { flex: none; border: 1px solid var(--line-2); border-radius: 999px; white-space: nowrap; }
+  .doc-nav .grp { display: none; }
+  .doc-flow { flex-wrap: wrap; }
+  .doc-flow .node { flex-basis: 130px; }
+  .doc-flow .arrow { display: none; }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cell, .cell.wide, .cell.half { grid-column: span 1; }
+  .cell.wide { grid-column: span 2; }
+  .nav-links { display: none; }
+  .nav .lang { margin-left: auto; }
+  .nav .wrap { gap: 12px; }
+}
+@media (max-width: 640px) {
+  .hero { padding-top: 44px; }
+  section { padding-top: 80px; }
+  .c-main { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+  .trans { grid-column: 1 / -1; grid-row: 2; flex-direction: row; }
+  .trans .t-btn { flex: 1; min-height: 48px; }
+  .c-meta { display: none; }
+  .inputs { display: flex; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+  .in { flex: 0 0 128px; scroll-snap-align: start; }
+  .principles, .open, .first-run-grid { grid-template-columns: 1fr; }
+  .steps li { grid-template-columns: 1fr; gap: 8px; }
+  .principles li, .principles li + li { padding: 24px 0; border-left: 0; }
+  .principles li + li { border-top: 1px solid var(--line); }
+  .bento { grid-template-columns: 1fr; }
+  .cell.wide { grid-column: span 1; }
+  .devices { flex-direction: column; align-items: center; }
+  footer nav { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .c-live .dot, h1 .line, .hero-sub, .stage { animation: none; }
+  .screen .ghost-scene, .lower { transition: none; }
+}
+</style>
+
+<!-- Cenas de exemplo dos inputs (desenhos, sem imagens externas) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="s-pulpito" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#17110D"></rect>
+    <circle cx="160" cy="50" r="130" fill="#3A2A1C" opacity=".55"></circle>
+    <rect x="0" y="150" width="320" height="30" fill="#0F0B08"></rect>
+    <circle cx="160" cy="66" r="17" fill="#C9A384"></circle>
+    <rect x="126" y="88" width="68" height="92" rx="28" fill="#2C3A55"></rect>
+    <rect x="106" y="126" width="108" height="54" rx="5" fill="#4A3423"></rect>
+    <rect x="106" y="126" width="108" height="6" rx="3" fill="#5F4530"></rect>
+    <path d="M160 126 L172 100" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"></path>
+    <circle cx="173" cy="98" r="3.5" fill="#111"></circle>
+  </symbol>
+  <symbol id="s-geral" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#0D1220"></rect>
+    <polygon points="70,0 100,0 150,130 30,130" fill="#FFFFFF" opacity=".05"></polygon>
+    <polygon points="220,0 250,0 290,130 170,130" fill="#FFFFFF" opacity=".05"></polygon>
+    <rect x="112" y="28" width="96" height="54" rx="3" fill="#23406E"></rect>
+    <rect x="128" y="48" width="64" height="4" rx="2" fill="#B5CEFF" opacity=".8"></rect>
+    <rect x="138" y="58" width="44" height="4" rx="2" fill="#B5CEFF" opacity=".5"></rect>
+    <rect x="0" y="124" width="320" height="56" fill="#181E2E"></rect>
+    <rect x="0" y="124" width="320" height="3" fill="#2A3350"></rect>
+    <g fill="#070A12">
+      <circle cx="78" cy="96" r="7"></circle><rect x="69" y="104" width="18" height="34" rx="8"></rect>
+      <circle cx="122" cy="100" r="7"></circle><rect x="113" y="108" width="18" height="30" rx="8"></rect>
+      <circle cx="160" cy="94" r="8"></circle><rect x="150" y="103" width="20" height="36" rx="9"></rect>
+      <circle cx="200" cy="100" r="7"></circle><rect x="191" y="108" width="18" height="30" rx="8"></rect>
+      <circle cx="244" cy="96" r="7"></circle><rect x="235" y="104" width="18" height="34" rx="8"></rect>
+    </g>
+    <g fill="#04060B">
+      <circle cx="40" cy="168" r="14"></circle><circle cx="100" cy="172" r="15"></circle><circle cx="165" cy="170" r="15"></circle>
+      <circle cx="228" cy="173" r="15"></circle><circle cx="288" cy="168" r="14"></circle>
+    </g>
+  </symbol>
+  <symbol id="s-letra" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#0B1630"></rect>
+    <circle cx="260" cy="20" r="110" fill="#17306A" opacity=".45"></circle>
+    <text data-i18n="sc1" x="160" y="84" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF">[Primeira linha da estrofe]</text>
+    <text data-i18n="sc2" x="160" y="110" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF">[Segunda linha da estrofe]</text>
+  </symbol>
+  <symbol id="s-slides" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#E9ECF2"></rect>
+    <rect x="28" y="30" width="6" height="34" rx="3" fill="#3B6FE0"></rect>
+    <text data-i18n="scWord" x="46" y="55" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#14161B">Palavra</text>
+    <text data-i18n="scVerse" x="28" y="96" font-family="Inter, Arial, sans-serif" font-size="14" fill="#3A4150">[Texto do versículo]</text>
+    <rect x="28" y="112" width="230" height="7" rx="3.5" fill="#C3C9D6"></rect>
+    <rect x="28" y="128" width="190" height="7" rx="3.5" fill="#C3C9D6"></rect>
+    <rect x="28" y="144" width="120" height="7" rx="3.5" fill="#C3C9D6"></rect>
+  </symbol>
+  <symbol id="s-avisos" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#241A3D"></rect>
+    <rect x="0" y="0" width="320" height="180" fill="#3A2A66" opacity=".5" transform="skewX(-28) translate(190 0)"></rect>
+    <circle cx="160" cy="76" r="26" fill="#FFFFFF" opacity=".14"></circle>
+    <polygon points="152,62 152,90 176,76" fill="#FFFFFF"></polygon>
+    <text data-i18n="scNotices" x="160" y="136" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#FFFFFF">Avisos da semana</text>
+  </symbol>
+</svg>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#topo" aria-label="Airo">
+      <svg viewBox="0 0 85 64" aria-hidden="true"><circle cx="31" cy="31" r="22" fill="none" stroke="#E6E8EC" stroke-width="18"></circle><rect x="44" y="0" width="18" height="62" rx="9" fill="#E6E8EC"></rect><circle cx="76" cy="55" r="9" fill="#F04438"></circle></svg>
+      Airo
+    </a>
+    <nav class="nav-links" aria-label="Seções" data-i18n-aria="navAria">
+      <a href="#telas" data-i18n="navScreens">Telas</a>
+      <a href="#recursos" data-i18n="navFeatures">Recursos</a>
+      <a href="#remoto" data-i18n="navRemote">Remoto</a>
+      <a href="#integracoes" data-i18n="navApi">Integrações</a>
+      <a href="#pricing" data-i18n="navPricing">Preços</a>
+      <a href="#docs" data-nav-docs>Docs</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Idioma" data-i18n-aria="langAria">
+      <button type="button" id="lang-en" data-lang="en" aria-pressed="false" aria-label="English">EN</button>
+      <button type="button" id="lang-pt" data-lang="pt" aria-pressed="true" aria-label="Português">PT</button>
+    </div>
+    <a class="btn primary small" href="#baixar" data-i18n="navDownload">Baixar</a>
+  </div>
+</header>
+
+<main id="topo" data-view="home">
+  <div class="hero wrap">
+    <div class="hero-head">
+      <div>
+        <p class="eyebrow"><span class="dot"></span><span data-i18n="heroEyebrow">Switcher de vídeo ao vivo para igrejas</span></p>
+        <h1 data-i18n="heroTitle"><span class="line">Do <span class="pv">preview</span> <em>ao ar</em>,</span><span class="line">sem susto.</span></h1>
+      </div>
+      <div class="hero-sub">
+        <p class="lede" data-i18n="heroLede">Câmeras, letras, slides e transmissão numa tela só. <strong>O Airo tem o fluxo de preview e program que a equipe de mídia já conhece</strong>, em português, pensado para quem opera como voluntário.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="#baixar" data-i18n="heroCta">Testar grátis por 15 dias</a>
+          <a class="btn ghost" href="#telas" data-i18n="heroCta2">Ver as telas</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="console" aria-label="Demonstração do switcher" data-i18n-aria="demoAria">
+        <div class="c-bar">
+          <span class="brand"><svg viewBox="0 0 85 64" aria-hidden="true"><circle cx="31" cy="31" r="22" fill="none" stroke="#E6E8EC" stroke-width="18"></circle><rect x="44" y="0" width="18" height="62" rx="9" fill="#E6E8EC"></rect><circle cx="76" cy="55" r="9" fill="#F04438"></circle></svg>Airo</span>
+          <span class="c-proj" data-i18n="project">Culto de domingo</span>
+          <span class="c-meta mono" data-i18n="saved">1080p30 · salvo há 2 min</span>
+          <span class="c-live"><span class="dot"></span><span data-i18n="live">AO VIVO</span> <span id="clock">00:42:10</span></span>
+        </div>
+        <div class="c-main">
+          <div class="monitor">
+            <div class="m-label"><span class="tag pvw">PREVIEW</span><span class="m-name" id="pvw-name">2 · Câmera geral</span></div>
+            <div class="screen pvw"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use id="pvw-use" href="#s-geral"></use></svg></div>
+          </div>
+          <div class="trans">
+            <button class="t-btn cut" id="btn-cut" type="button">CUT</button>
+            <button class="t-btn" id="btn-fade" type="button">FADE</button>
+            <button class="t-btn" id="btn-ov" type="button" aria-pressed="true">OV 1</button>
+          </div>
+          <div class="monitor">
+            <div class="m-label"><span class="tag pgm">PROGRAM</span><span class="m-name" id="pgm-name">1 · Câmera púlpito</span></div>
+            <div class="screen pgm" id="pgm-screen">
+              <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use id="pgm-use" href="#s-pulpito"></use></svg>
+              <div class="lower on" id="lower"><b data-i18n="welcome">Boas-vindas</b><span data-i18n="project">Culto de domingo</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="c-inputs">
+          <p class="c-hint"><b id="demo-hint">Demonstração automática. Clique num input para assumir o corte.</b><span data-i18n="demoKeys">CUT ou FADE colocam no ar · OV 1 liga a legenda</span></p>
+          <div class="inputs" id="inputs">
+            <button class="in is-pgm" type="button" data-id="1"><span class="thumb"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#s-pulpito"></use></svg><span class="tally">NO AR</span></span><span class="meta"><span class="n">1</span><span class="nm" data-i18n="in1">Câmera púlpito</span></span></button>
+            <button class="in is-pvw" type="button" data-id="2"><span class="thumb"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#s-geral"></use></svg><span class="tally">PREVIEW</span></span><span class="meta"><span class="n">2</span><span class="nm" data-i18n="in2">Câmera geral</span></span></button>
+            <button class="in" type="button" data-id="3"><span class="thumb"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#s-letra"></use></svg><span class="tally"></span></span><span class="meta"><span class="n">3</span><span class="nm" data-i18n="in3">Letra do louvor</span></span></button>
+            <button class="in" type="button" data-id="4"><span class="thumb"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#s-slides"></use></svg><span class="tally"></span></span><span class="meta"><span class="n">4</span><span class="nm" data-i18n="in4">Slides da palavra</span></span></button>
+            <button class="in" type="button" data-id="5"><span class="thumb"><svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#s-avisos"></use></svg><span class="tally"></span></span><span class="meta"><span class="n">5</span><span class="nm" data-i18n="in5">Vídeo de avisos</span></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="wrap" id="voluntario">
+    <div class="sec-head">
+      <p class="eyebrow"><span class="dot green"></span><span data-i18n="volEyebrow">Feito para o voluntário</span></p>
+      <h2 data-i18n="volTitle">Quem opera no domingo nem sempre é técnico. A tela precisa ajudar.</h2>
+    </div>
+    <ul class="principles">
+      <li>
+        <div class="swatches" aria-hidden="true"><i style="background:var(--live)"></i><i style="background:var(--pvw)"></i></div>
+        <h3 data-i18n="vol1Title">Vermelho está no ar. Verde é o próximo.</h3>
+        <p data-i18n="vol1Text">As duas cores valem em toda a tela: monitores, cartões de input e botões. Dá para saber o que o público está vendo sem ler nada.</p>
+      </li>
+      <li>
+        <div class="swatches" aria-hidden="true"><i style="width:44px"></i><i style="width:18px"></i><i style="width:30px"></i></div>
+        <h3 data-i18n="vol2Title">Em português, sem jargão solto.</h3>
+        <p data-i18n="vol2Text">Rótulos claros e uma dica curta ao lado de cada opção. Valores padrão sensatos para começar sem abrir nenhuma configuração.</p>
+      </li>
+      <li>
+        <div class="swatches" aria-hidden="true"><i style="width:60px;background:var(--fg)"></i></div>
+        <h3 data-i18n="vol3Title">O culto inteiro salvo num preset.</h3>
+        <p data-i18n="vol3Text">Abra "Culto de domingo" e câmeras, letras, legendas e destinos de transmissão voltam do jeito que estavam. O Airo salva sozinho a cada 5 minutos.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section class="wrap" id="telas">
+    <div class="sec-head">
+      <p class="eyebrow"><span class="dot"></span><span data-i18n="shotsEyebrow">Por dentro</span></p>
+      <h2 data-i18n="shotsTitle">O Airo de verdade, tela por tela.</h2>
+      <p data-i18n="shotsText">Capturas do aplicativo com o projeto de exemplo "Evento de domingo" aberto.</p>
+    </div>
+    <div class="shots">
+      <div class="tabs" role="tablist" aria-label="Telas do Airo" data-i18n-aria="shotsAria">
+        <button class="tab" type="button" role="tab" id="tab-0" aria-selected="true" aria-controls="shot-panel" data-i18n="tab0">Tela principal</button>
+        <button class="tab" type="button" role="tab" id="tab-1" aria-selected="false" aria-controls="shot-panel" tabindex="-1" data-i18n="tab1">Adicionar input</button>
+        <button class="tab" type="button" role="tab" id="tab-2" aria-selected="false" aria-controls="shot-panel" tabindex="-1" data-i18n="tab2">Propriedades</button>
+        <button class="tab" type="button" role="tab" id="tab-3" aria-selected="false" aria-controls="shot-panel" tabindex="-1" data-i18n="tab3">Presets</button>
+      </div>
+      <div class="shot-frame" id="shot-panel" role="tabpanel" aria-labelledby="tab-0">
+        <img id="shot-img" src="img/principal.png" width="1600" height="1000" alt="Tela principal do Airo: preview e program lado a lado, transições, mixer de áudio e a grade de inputs do culto.">
+      </div>
+      <p class="shot-cap"><span id="shot-text">Preview à esquerda, program à direita, transições no meio. Embaixo, os inputs do culto organizados em abas e os quatro overlays.</span></p>
+    </div>
+  </section>
+
+  <section class="wrap" id="recursos">
+    <div class="sec-head">
+      <p class="eyebrow"><span class="dot blue"></span><span data-i18n="featEyebrow">Recursos</span></p>
+      <h2 data-i18n="featTitle">O que uma mesa de corte precisa, e só isso.</h2>
+      <p data-i18n="featText">Preview, program, transições e overlays funcionam como numa mesa de corte profissional, sem menus escondidos.</p>
+    </div>
+    <div class="bento">
+      <article class="cell wide">
+        <h3 data-i18n="f1Title">Tudo vira input</h3>
+        <p data-i18n="f1Text">Cada fonte aparece como um cartão com miniatura ao vivo. Organize em abas como Câmeras, Louvor, Palavra e Avisos.</p>
+        <div class="vis chips">
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="M16 10l6-3v10l-6-3"></path></svg><span data-i18n="chipCamera">Câmera</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg><span data-i18n="chipScreen">Captura de tela</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 8.5v7l6-3.5z"></path></svg><span data-i18n="chipVideo">Vídeo e áudio</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="M21 16l-5-5-8 8"></path></svg><span data-i18n="chipImage">Imagem e cor</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h12M4 12h12M4 18h8"></path><path d="M19 15v6l3-3z"></path></svg><span data-i18n="chipList">Lista / Playlist</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M7 9h6M7 13h10M12 17v4"></path></svg><span data-i18n="chipSlides">Slides em PDF</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M12 6v13M9 19h6"></path></svg><span data-i18n="chipTitle">Título e legenda</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M7.5 7.5a6.4 6.4 0 000 9M16.5 7.5a6.4 6.4 0 010 9M4.5 4.5a10.6 10.6 0 000 15M19.5 4.5a10.6 10.6 0 010 15"></path></svg><span>NDI / SRT</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"></path></svg><span data-i18n="chipBrowser">Navegador</span></span>
+        </div>
+      </article>
+      <article class="cell">
+        <h3 data-i18n="f2Title">Legendas e logo por cima</h3>
+        <p data-i18n="f2Text">Quatro canais de overlay para lower third, logo e avisos, mais o Fade to Black para encerrar.</p>
+      </article>
+      <article class="cell half">
+        <h3 data-i18n="f3Title">Até 3 destinos ao mesmo tempo</h3>
+        <p data-i18n="f3Text">YouTube, Facebook e um servidor RTMP próprio, cada um com sua qualidade. Se a conexão cair, o Airo reconecta sozinho. As chaves ficam no cofre do sistema, nunca no arquivo do preset.</p>
+      </article>
+      <article class="cell half">
+        <h3 data-i18n="f4Title">Áudio à vista</h3>
+        <p data-i18n="f4Text">Mixer com medidor por canal, buses Master, A e B, noise gate e compressor por input, e a leitura de loudness do que está indo ao ar.</p>
+      </article>
+      <article class="cell">
+        <h3 data-i18n="f5Title">Roteiro do culto</h3>
+        <p data-i18n="f5Text">Monte a ordem do culto em blocos e siga item por item, sem procurar input na hora.</p>
+      </article>
+      <article class="cell">
+        <h3 data-i18n="f6Title">Gravação junto</h3>
+        <p data-i18n="f6Text">Grave enquanto transmite, em MP4 ou MOV, com divisão automática por tamanho ou por tempo.</p>
+        <div class="vis codecs" aria-hidden="true"><span>H.264</span><span>HEVC</span><span>ProRes 422 Proxy</span><span>MP4</span><span>MOV</span></div>
+      </article>
+      <article class="cell">
+        <h3 data-i18n="f7Title">Telão no segundo monitor</h3>
+        <p data-i18n="f7Text">O program sai em tela cheia para o projetor ou a TV da igreja, direto do Airo.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="remoto">
+    <div class="split">
+      <div>
+        <div class="sec-head">
+          <p class="eyebrow"><span class="dot green"></span><span data-i18n="remEyebrow">Controle remoto</span></p>
+          <h2 data-i18n="remTitle">O corte na mão de quem está no meio da igreja.</h2>
+          <p data-i18n="remText">O Airo Remoto é o app de celular para trocar de input e ajustar o áudio longe da mesa, de qualquer ponto da igreja.</p>
+        </div>
+        <ul class="list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M10 9.5v5l4.5-2.5z"></path></svg><span data-i18n="rem1"><b>Inputs e corte.</b> Veja o que está no ar, mande um input ao preview e corte.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v16M12 4v16M18 4v16"></path><path d="M4 9h4M10 15h4M16 8h4"></path></svg><span data-i18n="rem2"><b>Áudio.</b> Ajuste volume e mudo de cada canal sem voltar à mesa.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 14h3v3M21 14v7h-4M14 20v1"></path></svg><span data-i18n="rem3"><b>Pareamento por código.</b> Aponte a câmera do celular para o código na tela do Airo, na mesma rede da igreja.</span></li>
+        </ul>
+      </div>
+      <div class="devices" aria-hidden="true">
+        <div class="phone"><div class="phone-in">
+          <div class="p-top"><span class="dot green"></span><span data-i18n="project">Culto de domingo</span><span class="r" data-i18n="connected">conectado</span></div>
+          <div class="p-grid">
+            <div class="p-in pgm"><span class="n">1</span><span data-i18n="in1">Câmera púlpito</span></div>
+            <div class="p-in pvw"><span class="n">2</span><span data-i18n="in2">Câmera geral</span></div>
+            <div class="p-in"><span class="n">3</span><span data-i18n="in3">Letra do louvor</span></div>
+            <div class="p-in"><span class="n">4</span><span data-i18n="in4">Slides da palavra</span></div>
+          </div>
+          <div class="p-cut">CUT</div>
+          <div class="p-tabs"><span class="on">Inputs</span><span data-i18n="pAudio">Áudio</span><span data-i18n="pConn">Conexão</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="integracoes">
+    <div class="sec-head">
+      <p class="eyebrow"><span class="dot blue"></span><span data-i18n="apiEyebrow">Integrações</span></p>
+      <h2 data-i18n="apiTitle">Uma API para ligar o Airo ao resto da igreja.</h2>
+      <p data-i18n="apiText">Comandos por HTTP, estado em tempo real por WebSocket e webhooks que avisam outros sistemas. Tudo pela rede local, com um token para cada aparelho.</p>
+    </div>
+    <div class="api">
+      <ul class="specs">
+        <li><div class="k"><b>HTTP</b><code>http://&lt;ip&gt;:4601/api/v1</code></div><p data-i18n="spec1">Comandos simples por URL: cortar, ligar overlay, iniciar e parar a transmissão ou a gravação.</p></li>
+        <li><div class="k"><b>WebSocket</b><code>ws://&lt;ip&gt;:4600</code></div><p data-i18n="spec2">Eventos e estado em tempo real, para painéis, tally e controladores.</p></li>
+        <li><div class="k"><b>Tokens</b><code>stk_…</code></div><p data-i18n="spec3">Um token por aparelho, cada um só com as permissões que precisa.</p></li>
+        <li><div class="k"><b>Webhooks</b><code>X-Airo-Signature</code></div><p data-i18n="spec4">POST com JSON assinado em HMAC-SHA256, com novas tentativas quando a entrega falha. O envio nunca trava o vídeo.</p></li>
+        <li><div class="k"><b>Plugins</b><code>Meu Hinário</code></div><p data-i18n="spec5">O plugin do Meu Hinário leva hinos, letras e leituras para o telão.</p></li>
+      </ul>
+      <div class="term">
+        <div class="term-tabs" role="tablist" aria-label="Exemplos da API" data-i18n-aria="apiAria">
+          <button class="tab" type="button" role="tab" id="api-0" aria-selected="true" aria-controls="api-panel" data-i18n="apiTab0">Iniciar transmissão</button>
+          <button class="tab" type="button" role="tab" id="api-1" aria-selected="false" aria-controls="api-panel" tabindex="-1" data-i18n="apiTab1">Parar transmissão</button>
+          <button class="tab" type="button" role="tab" id="api-2" aria-selected="false" aria-controls="api-panel" tabindex="-1" data-i18n="apiTab2">Cortar para um input</button>
+          <button class="tab" type="button" role="tab" id="api-3" aria-selected="false" aria-controls="api-panel" tabindex="-1" data-i18n="apiTab3">Receber eventos</button>
+          <button class="tab" type="button" role="tab" id="api-4" aria-selected="false" aria-controls="api-panel" tabindex="-1" data-i18n="apiTab4">Webhook</button>
+        </div>
+        <div id="api-panel" role="tabpanel" aria-labelledby="api-0">
+          <p class="term-desc" id="api-desc">Uma chamada HTTP inicia a transmissão em todos os destinos ativos do preset.</p>
+          <pre id="api-code" tabindex="0">curl -H "Authorization: Bearer $AIRO_TOKEN" \
+  "http://192.168.0.10:4601/api/v1/function?name=StartStreaming"
+
+{"ok": true}</pre>
+        </div>
+        <div class="events"><span class="ev-label" data-i18n="apiEvents">Eventos</span><span>stream.started</span><span>stream.stopped</span><span>stream.reconnecting</span><span>recording.started</span><span>recording.stopped</span><span>input.program</span><span>input.preview</span><span>overlay.on</span><span>overlay.off</span></div>
+      </div>
+    </div>
+    <p class="api-more"><a class="btn ghost" href="#docs" data-i18n="apiDocsCta">Ler a documentação</a><a class="link" href="#docs-site" data-i18n="apiGuideCta">Guia: transmissão ao vivo no site da igreja</a></p>
+  </section>
+
+  <section class="wrap pricing" id="pricing">
+    <div class="price-grid">
+      <div>
+        <p class="eyebrow"><span class="dot"></span><span data-i18n="prEyebrow">Preços</span></p>
+        <h2 data-i18n="prTitle">Um plano só. Tudo incluído.</h2>
+        <p class="lede" data-i18n="prLede">Sem níveis e sem recurso cobrado à parte. Teste o Airo completo por 15 dias e, se servir para a sua igreja, continue por um valor fixo por mês.</p>
+        <ol class="steps">
+          <li>
+            <span class="tag pvw">PREVIEW</span>
+            <div><h3 data-i18n="pr1Title">15 dias grátis</h3><p data-i18n="pr1Text">Baixe, monte o preset do seu culto e transmita de verdade. Todos os recursos ficam liberados desde o primeiro dia.</p></div>
+          </li>
+          <li>
+            <span class="tag pgm">PROGRAM</span>
+            <div><h3 data-i18n="pr2Title">R$ 59,90 por mês</h3><p data-i18n="pr2Text">Depois do teste, a assinatura mensal mantém tudo como está: os mesmos recursos, os mesmos presets, sem trocar de plano.</p></div>
+          </li>
+        </ol>
+      </div>
+      <div class="price-card">
+        <div class="price-top"><span class="brand"><svg viewBox="0 0 85 64" aria-hidden="true"><circle cx="31" cy="31" r="22" fill="none" stroke="#E6E8EC" stroke-width="18"></circle><rect x="44" y="0" width="18" height="62" rx="9" fill="#E6E8EC"></rect><circle cx="76" cy="55" r="9" fill="#F04438"></circle></svg>Airo</span><span class="tag pvw" data-i18n="prTrialTag">15 DIAS GRÁTIS</span></div>
+        <div>
+          <p class="price"><span data-i18n="prPrice">R$ 59,90</span><small data-i18n="prPer">por mês</small></p>
+          <p class="price-note" data-i18n="prNote" style="margin-top:12px">Assinatura mensal, preço único.</p>
+        </div>
+        <a class="btn primary" href="#baixar" data-i18n="prCta">Começar o teste grátis</a>
+        <div class="incl">
+          <p class="incl-title" data-i18n="prInclTitle">O que está incluído</p>
+          <ul class="incl" style="padding-top:0;border-top:0">
+            <li><span class="dot green"></span><span data-i18n="prI1">Todos os tipos de input, incluindo NDI / SRT e navegador</span></li>
+            <li><span class="dot green"></span><span data-i18n="prI2">Transmissão para até 3 destinos ao mesmo tempo</span></li>
+            <li><span class="dot green"></span><span data-i18n="prI3">Gravação, quatro overlays e roteiro do culto</span></li>
+            <li><span class="dot green"></span><span data-i18n="prI4">Mixer de áudio com medidores e loudness</span></li>
+            <li><span class="dot green"></span><span data-i18n="prI5">App de controle, API, webhooks e plugins</span></li>
+            <li><span class="dot green"></span><span data-i18n="prI6">macOS, Windows e Linux</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq" id="faq">
+      <div class="sec-head">
+        <p class="eyebrow"><span class="dot green"></span><span data-i18n="faqEyebrow">Perguntas frequentes</span></p>
+        <h2 data-i18n="faqTitle">Antes de assinar.</h2>
+      </div>
+      <div class="faq-list">
+        <details open>
+          <summary><span data-i18n="faq1Q">Preciso de cartão de crédito para testar?</span></summary>
+          <p data-i18n="faq1A">Não. Baixe o Airo e use por 15 dias com tudo liberado. Você só informa o cartão se decidir continuar.</p>
+        </details>
+        <details>
+          <summary><span data-i18n="faq2Q">O que acontece quando os 15 dias acabam?</span></summary>
+          <p data-i18n="faq2A">Nada é cobrado sozinho. Para continuar usando o Airo, assine por R$ 59,90 por mês. Seus presets continuam no computador.</p>
+        </details>
+        <details>
+          <summary><span data-i18n="faq3Q">A assinatura vale para quantos computadores?</span></summary>
+          <p data-i18n="faq3A">Para um. Cada computador que roda o Airo precisa da própria assinatura.</p>
+        </details>
+        <details>
+          <summary><span data-i18n="faq4Q">Posso cancelar quando quiser?</span></summary>
+          <p data-i18n="faq4A">Pode. Não há fidelidade nem multa. O acesso segue até o fim do mês já pago e os presets continuam no seu computador.</p>
+        </details>
+        <details>
+          <summary><span data-i18n="faq5Q">Quais formas de pagamento vocês aceitam?</span></summary>
+          <p data-i18n="faq5A">Cartão de crédito, com cobrança mensal.</p>
+        </details>
+        <details>
+          <summary><span data-i18n="faq6Q">Existe um plano mais caro com mais recursos?</span></summary>
+          <p data-i18n="faq6A">Não. O Airo tem um plano só, e ele inclui todos os recursos.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="baixar">
+    <div class="cta">
+      <div>
+        <h2 data-i18n="dlTitle">Pronto para o próximo culto.</h2>
+        <p data-i18n="dlText">Baixe o Airo, abra um modelo de preset e faça o primeiro corte em minutos. Os primeiros 15 dias são por nossa conta.</p>
+      </div>
+      <div class="dl">
+        <div class="dl-item">
+          <a class="btn primary" href="https://github.com/airo-app/airo-app.github.io/releases/latest/download/Airo-macOS-arm64.dmg" download><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516s1.52.087 2.475-1.258.762-2.391.728-2.43m3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422s1.675-2.789 1.698-2.854-.597-.79-1.254-1.157a3.7 3.7 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56s.625 1.924 1.273 2.796c.576.984 1.34 1.667 1.659 1.899s1.219.386 1.843.067c.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758q.52-1.185.473-1.282"></path></svg><span data-i18n="dlMac">Baixar para macOS</span></a>
+          <p class="dl-meta"><span class="mono">v0.1.0 · 280 MB</span> · <span data-l="pt">macOS 13 ou mais novo, Apple Silicon</span><span data-l="en">macOS 13 or later, Apple Silicon</span></p>
+        </div>
+        <div class="dl-item">
+          <a class="btn ghost" href="https://github.com/airo-app/airo-app.github.io/releases/latest/download/Airo-Windows-x64.zip" download><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.555 1.375 0 2.237v5.45h6.555zM0 13.795l6.555.933V8.313H0zm7.278-5.4.026 6.378L16 16V8.395zM16 0 7.33 1.244v6.414H16z"></path></svg><span data-i18n="dlWin">Baixar para Windows</span></a>
+          <p class="dl-meta"><span class="mono">v0.1.0 · 82 MB</span> · <span data-l="pt">Windows 10 ou 11, 64 bits</span><span data-l="en">Windows 10 or 11, 64-bit</span></p>
+        </div>
+        <div class="dl-item">
+          <a class="btn ghost" href="https://github.com/airo-app/airo-app.github.io/releases/latest/download/Airo-Linux-x86_64.AppImage" download><svg viewBox="0 0 16 16" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M3.4 8.2a4.6 6.4 0 1 0 9.200 0a4.6 6.4 0 1 0-9.200 0zM5.500 10.200a2.500 3.500 0 1 0 5 0a2.500 3.500 0 1 0-5 0zM5.900 4.900a.75.75 0 1 0 1.500 0a.75.75 0 1 0-1.500 0zM8.600 4.900a.75.75 0 1 0 1.500 0a.75.75 0 1 0-1.500 0zM7.100 6.300h1.800L8 7.300z"></path><ellipse cx="5" cy="14.900" rx="2.200" ry=".9"></ellipse><ellipse cx="11" cy="14.900" rx="2.200" ry=".9"></ellipse></svg><span data-i18n="dlLinux">Baixar para Linux</span></a>
+          <p class="dl-meta"><span class="mono">v0.1.0 · 89 MB</span> · <span data-l="pt">Linux x86_64 (AppImage)</span><span data-l="en">Linux x86_64 (AppImage)</span></p>
+        </div>
+        <p class="dl-note" data-i18n="dlNote">15 dias grátis com tudo liberado, depois R$ 59,90 por mês. <a href="#pricing">Ver preços</a></p>
+        <p class="dl-all"><a href="https://github.com/airo-app/airo-app.github.io/releases"><span data-l="pt">Todas as versões</span><span data-l="en">All versions</span></a></p>
+      </div>
+    </div>
+    <div class="first-run" aria-labelledby="first-run-title">
+      <h3 id="first-run-title"><span data-l="pt">Na primeira abertura</span><span data-l="en">Opening it the first time</span></h3>
+      <div class="first-run-grid">
+        <div><b>macOS</b><p data-l="pt">O Airo ainda não é notarizado pela Apple. Abra o .dmg, arraste o Airo para Aplicativos e clique nele com o botão direito &gt; <b>Abrir</b>. Se o macOS bloquear, vá em <b>Ajustes do Sistema &gt; Privacidade e Segurança</b> e clique em <b>Abrir Mesmo Assim</b>.</p><p data-l="en">Airo is not notarized by Apple yet. Open the .dmg, drag Airo to Applications, then right-click it &gt; <b>Open</b>. If macOS blocks it, go to <b>System Settings &gt; Privacy &amp; Security</b> and click <b>Open Anyway</b>.</p></div>
+        <div><b>Windows</b><p data-l="pt">Extraia o .zip e abra <code>Airo\Airo.exe</code>. Se o SmartScreen avisar, clique em <b>Mais informações &gt; Executar assim mesmo</b>.</p><p data-l="en">Extract the .zip and open <code>Airo\Airo.exe</code>. If SmartScreen warns you, click <b>More info &gt; Run anyway</b>.</p></div>
+        <div><b>Linux</b><p data-l="pt">Dê permissão de execução e abra:</p><p data-l="en">Make it executable, then run it:</p><pre class="mono">chmod +x Airo-Linux-x86_64.AppImage
+./Airo-Linux-x86_64.AppImage</pre></div>
+      </div>
+    </div>
+    <div class="open">
+      <div class="fact"><b data-i18n="fact1Title">macOS, Windows e Linux</b><span data-i18n="fact1Text">Aplicativo nativo nas três plataformas.</span></div>
+      <div class="fact"><b data-i18n="fact3Title">Presets .airo</b><span data-i18n="fact3Text">Leve o culto pronto para outro computador.</span></div>
+    </div>
+  </section>
+</main>
+
+<main id="docs" class="wrap docs" data-view="docs" hidden>
+  <nav class="doc-nav" aria-label="Docs">
+    <a href="#docs" data-doc-link="docs"><span data-l="pt">Começando</span><span data-l="en">Getting started</span></a>
+    <span class="grp"><span data-l="pt">Guias</span><span data-l="en">Guides</span></span>
+    <a href="#docs-site" data-doc-link="docs-site"><span data-l="pt">Transmissão no site da igreja</span><span data-l="en">Live stream on your website</span></a>
+    <span class="grp"><span data-l="pt">Referência</span><span data-l="en">Reference</span></span>
+    <a href="#docs-events" data-doc-link="docs-events"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></a>
+  </nav>
+  <div class="doc-body">
+    <article data-doc="docs">
+<p class="eyebrow"><span class="dot"></span><span data-l="pt">Documentação</span><span data-l="en">Documentation</span></p>
+<h1 class="doc-title" data-l="pt">Começando com a API</h1><h1 class="doc-title" data-l="en">Getting started with the API</h1>
+<p class="doc-lede" data-l="pt">O Airo pode ser controlado pela rede local por apps, painéis, controladores e scripts. Esta página mostra como ligar a API, criar um token e fazer a primeira chamada.</p><p class="doc-lede" data-l="en">Airo can be controlled over the local network by apps, dashboards, controllers and scripts. This page shows how to turn the API on, create a token and make your first call.</p>
+<h2 data-l="pt">Dois jeitos de falar com o Airo</h2><h2 data-l="en">Two ways to talk to Airo</h2>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt"></span><span data-l="en"></span></th><th><span data-l="pt">WebSocket</span><span data-l="en">WebSocket</span></th><th><span data-l="pt">HTTP</span><span data-l="en">HTTP</span></th></tr></thead><tbody>
+<tr><td><span data-l="pt">Porta padrão</span><span data-l="en">Default port</span></td><td><code>4600</code></td><td><code>4601</code></td></tr>
+<tr><td><span data-l="pt">Para quê</span><span data-l="en">Best for</span></td><td><span data-l="pt">Controle em tempo real e eventos</span><span data-l="en">Real-time control and events</span></td><td><span data-l="pt">Comandos simples por URL</span><span data-l="en">Simple commands by URL</span></td></tr>
+<tr><td><span data-l="pt">Endereço</span><span data-l="en">Address</span></td><td><code>ws://IP:4600</code></td><td><code>http://IP:4601/api/v1</code></td></tr>
+</tbody></table></div>
+<p data-l="pt">Os dois usam os mesmos tokens e executam as mesmas funções. No próprio computador do Airo, use <code>localhost</code> no lugar do IP.</p><p data-l="en">Both use the same tokens and run the same functions. On the Airo computer itself, use <code>localhost</code> instead of the IP.</p>
+<h2 data-l="pt">Ligar a API</h2><h2 data-l="en">Turn the API on</h2>
+<ol>
+<li data-l="pt">No Airo, abra <b>Configurações › API e WebSocket</b>.</li><li data-l="en">In Airo, open <b>Settings › API and WebSocket</b>.</li>
+<li data-l="pt">Ligue o <b>Servidor WebSocket</b>, a <b>API HTTP</b> ou os dois.</li><li data-l="en">Turn on the <b>WebSocket server</b>, the <b>HTTP API</b>, or both.</li>
+<li data-l="pt">Copie o <b>endereço</b> e o <b>token de acesso</b>.</li><li data-l="en">Copy the <b>address</b> and the <b>access token</b>.</li>
+</ol>
+<div class="doc-note" data-l="pt"><b>Rede local.</b> O aparelho precisa estar na mesma rede do computador do Airo. A API não usa TLS, então use só na rede da igreja.</div><div class="doc-note" data-l="en"><b>Local network.</b> The device must be on the same network as the Airo computer. The API does not use TLS, so keep it on the church network.</div>
+<h2 data-l="pt">Tokens e permissões</h2><h2 data-l="en">Tokens and permissions</h2>
+<p data-l="pt">O token principal pode tudo. Para cada aparelho ou programa, crie um token extra só com o que ele precisa, em <b>Permissões por token › + Novo token</b>. O token extra aparece inteiro uma única vez: copie na hora.</p><p data-l="en">The main token can do everything. For each device or program, create an extra token with only what it needs, under <b>Token permissions › + New token</b>. An extra token is shown in full only once, so copy it right away.</p>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Permissão</span><span data-l="en">Permission</span></th><th><span data-l="pt">Na tela</span><span data-l="en">On screen</span></th><th><span data-l="pt">Libera</span><span data-l="en">Allows</span></th></tr></thead><tbody>
+<tr><td><code>read</code></td><td><span data-l="pt">Leitura</span><span data-l="en">Read</span></td><td><span data-l="pt">O estado e os eventos</span><span data-l="en">State and events</span></td></tr>
+<tr><td><code>inputs</code></td><td><span data-l="pt">Inputs</span><span data-l="en">Inputs</span></td><td><span data-l="pt">Preview, program, transições, overlays e Fade to Black</span><span data-l="en">Preview, program, transitions, overlays and Fade to Black</span></td></tr>
+<tr><td><code>broadcast</code></td><td><span data-l="pt">Transmissão</span><span data-l="en">Broadcast</span></td><td><span data-l="pt">Gravar, transmitir, MultiCorder e replay</span><span data-l="en">Recording, streaming, MultiCorder and replay</span></td></tr>
+<tr><td><code>audio</code></td><td><span data-l="pt">Áudio</span><span data-l="en">Audio</span></td><td><span data-l="pt">Reservado para as funções de áudio</span><span data-l="en">Reserved for audio functions</span></td></tr>
+</tbody></table></div>
+<h2 data-l="pt">Primeira chamada</h2><h2 data-l="en">First call</h2>
+<p data-l="pt">Leia o estado do switcher:</p><p data-l="en">Read the switcher state:</p>
+<div class="doc-code"><div class="cap">bash</div><pre tabindex="0">curl -H "Authorization: Bearer stk_..." \
+  "http://192.168.0.10:4601/api/v1/state"</pre></div>
+<div class="doc-code"><div class="cap">json</div><pre tabindex="0">{
+  "program":  {"id": 1, "number": 1, "name": "Câmera Púlpito"},
+  "preview":  {"id": 4, "number": 4, "name": "Boas-vindas"},
+  "overlays": [null, {"id": 9, "number": 9, "name": "Logo da igreja"}, null, null],
+  "ftb": false,
+  "recording": true,
+  "streaming": false,
+  "inputs": [
+    {"id": 1, "number": 1, "name": "Câmera Púlpito", "kind": "camera", "state": "program"},
+    {"id": 2, "number": 2, "name": "Câmera Geral", "kind": "camera", "state": "off"}
+  ]
+}</pre></div>
+<h2 data-l="pt">Executar uma função</h2><h2 data-l="en">Run a function</h2>
+<p data-l="pt">As funções têm os nomes conhecidos de quem usa mesas de corte por software, sem diferenciar maiúsculas.</p><p data-l="en">Functions use the names familiar from software switchers, and are not case sensitive.</p>
+<div class="doc-code"><div class="cap">bash</div><pre tabindex="0">curl -H "Authorization: Bearer stk_..." \
+  "http://192.168.0.10:4601/api/v1/function?name=Cut&amp;input=2"
+
+curl -X POST -H "Authorization: Bearer stk_..." \
+  -d "name=PreviewInput&amp;input=3" "http://192.168.0.10:4601/api/v1/function"</pre></div>
+<p data-l="pt">O parâmetro <code>input</code> aceita a posição na grade (<code>2</code>), o nome exato (<code>Câmera Geral</code>) ou o id estável (<code>id:12</code>).</p><p data-l="en">The <code>input</code> parameter accepts the grid position (<code>2</code>), the exact name (<code>Câmera Geral</code>) or the stable id (<code>id:12</code>).</p>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Função</span><span data-l="en">Function</span></th><th><span data-l="pt">Permissão</span><span data-l="en">Permission</span></th><th><span data-l="pt">O que faz</span><span data-l="en">What it does</span></th></tr></thead><tbody>
+<tr><td><code>Cut</code></td><td><code>inputs</code></td><td><span data-l="pt">Corte seco do preview para o program. Com <code>input</code>, ele vai ao preview antes.</span><span data-l="en">Hard cut from preview to program. With <code>input</code>, it goes to preview first.</span></td></tr>
+<tr><td><code>QuickPlay</code></td><td><code>inputs</code></td><td><span data-l="pt">Leva o preview ao ar com a transição padrão.</span><span data-l="en">Takes preview to air with the default transition.</span></td></tr>
+<tr><td><code>Transition</code></td><td><code>inputs</code></td><td><span data-l="pt">Leva o preview ao ar com <code>transition</code>: Fade, Merge, Wipe ou Stinger.</span><span data-l="en">Takes preview to air with <code>transition</code>: Fade, Merge, Wipe or Stinger.</span></td></tr>
+<tr><td><code>PreviewInput</code></td><td><code>inputs</code></td><td><span data-l="pt">Põe o input no preview.</span><span data-l="en">Puts the input in preview.</span></td></tr>
+<tr><td><code>OverlayInput1In</code> … <code>4In</code></td><td><code>inputs</code></td><td><span data-l="pt">Liga o input no overlay.</span><span data-l="en">Turns the input on in that overlay.</span></td></tr>
+<tr><td><code>OverlayInput1Out</code> … <code>4Out</code></td><td><code>inputs</code></td><td><span data-l="pt">Desliga o overlay.</span><span data-l="en">Turns the overlay off.</span></td></tr>
+<tr><td><code>FadeToBlack</code></td><td><code>inputs</code></td><td><span data-l="pt">Liga ou desliga o Fade to Black.</span><span data-l="en">Toggles Fade to Black.</span></td></tr>
+<tr><td><code>StartRecording</code> / <code>StopRecording</code></td><td><code>broadcast</code></td><td><span data-l="pt">Começa ou para a gravação.</span><span data-l="en">Starts or stops recording.</span></td></tr>
+<tr><td><code>StartStreaming</code> / <code>StopStreaming</code></td><td><code>broadcast</code></td><td><span data-l="pt">Começa ou para a transmissão. Falha se nenhum destino está pronto.</span><span data-l="en">Starts or stops streaming. Fails if no destination is ready.</span></td></tr>
+</tbody></table></div>
+<div class="doc-note" data-l="pt"><b>Sem confirmação.</b> <code>StopStreaming</code> e <code>StopRecording</code> param na hora, sem perguntar ao operador. Peça a confirmação no seu sistema.</div><div class="doc-note" data-l="en"><b>No confirmation.</b> <code>StopStreaming</code> and <code>StopRecording</code> stop immediately, without asking the operator. Ask for confirmation in your own system.</div>
+<h2 data-l="pt">Respostas</h2><h2 data-l="en">Responses</h2>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Status</span><span data-l="en">Status</span></th><th><span data-l="pt">Corpo</span><span data-l="en">Body</span></th><th><span data-l="pt">Quando</span><span data-l="en">When</span></th></tr></thead><tbody>
+<tr><td><code>200</code></td><td><code>{"ok": true}</code></td><td><span data-l="pt">Deu certo (ou o estado, em <code>/state</code>).</span><span data-l="en">It worked (or the state, on <code>/state</code>).</span></td></tr>
+<tr><td><code>400</code></td><td><code>{"ok": false, "error": "…"}</code></td><td><span data-l="pt">A função falhou: nome, input ou parâmetro inválido.</span><span data-l="en">The function failed: invalid name, input or parameter.</span></td></tr>
+<tr><td><code>401</code></td><td><code>{"ok": false, "error": "…"}</code></td><td><span data-l="pt">Sem token ou token errado.</span><span data-l="en">Missing or wrong token.</span></td></tr>
+<tr><td><code>403</code></td><td><code>{"ok": false, "code": "forbidden"}</code></td><td><span data-l="pt">O token não tem a permissão da função.</span><span data-l="en">The token lacks the permission for that function.</span></td></tr>
+</tbody></table></div>
+<h2 data-l="pt">WebSocket em cinco mensagens</h2><h2 data-l="en">WebSocket in five messages</h2>
+<p data-l="pt">A primeira mensagem precisa ser um <code>hello</code> com o token, em até 5 segundos. Depois disso, o Airo aceita funções e empurra eventos sempre que algo muda.</p><p data-l="en">The first message must be a <code>hello</code> carrying the token, within 5 seconds. After that, Airo accepts functions and pushes events whenever something changes.</p>
+<div class="doc-code"><div class="cap">ws://192.168.0.10:4600</div><pre tabindex="0">→ {"type": "hello", "token": "stk_...", "client": "Meu painel"}
+← {"type": "hello", "ok": true, "server": "Airo", "protocol": 1, "permissions": ["read", "broadcast"]}
+
+→ {"type": "function", "id": "1", "name": "StartStreaming"}
+← {"type": "result", "id": "1", "ok": true}
+← {"type": "event", "event": "streaming", "data": {"active": true}}</pre></div>
+<p class="doc-next"><a href="#docs-site"><span data-l="pt">Guia: transmissão ao vivo no site da igreja →</span><span data-l="en">Guide: live stream on your church website →</span></a></p>
+    </article>
+    <article data-doc="docs-site" hidden>
+<p class="eyebrow"><span class="dot"></span><span data-l="pt">Guia</span><span data-l="en">Guide</span></p>
+<h1 class="doc-title" data-l="pt">Transmissão ao vivo no site da igreja</h1><h1 class="doc-title" data-l="en">Live stream on your church website</h1>
+<p class="doc-lede" data-l="pt">Neste guia, o painel da igreja abre o Airo, inicia a transmissão e recebe o endereço do vídeo para colocar o player no site. Ninguém precisa copiar e colar link.</p><p class="doc-lede" data-l="en">In this guide, the church dashboard opens Airo, starts the stream and receives the video address to put the player on the website. Nobody has to copy and paste a link.</p>
+<div class="doc-flow" role="img" aria-label="Painel → Airo → YouTube → servidor do painel → site">
+<div class="node"><b><span data-l="pt">Painel da igreja</span><span data-l="en">Church dashboard</span></b><small><span data-l="pt">botão Entrar ao vivo</span><span data-l="en">Go live button</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Airo</span><span data-l="en">Airo</span></b><small><span data-l="pt">abre o preset e transmite</span><span data-l="en">opens the preset and streams</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">YouTube</span><span data-l="en">YouTube</span></b><small><span data-l="pt">recebe o vídeo</span><span data-l="en">receives the video</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Servidor do painel</span><span data-l="en">Dashboard server</span></b><small><span data-l="pt">recebe o webhook</span><span data-l="en">gets the webhook</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Site</span><span data-l="en">Website</span></b><small><span data-l="pt">mostra o player</span><span data-l="en">shows the player</span></small></div>
+</div>
+<h2 data-l="pt">O que você precisa</h2><h2 data-l="en">What you need</h2>
+<ul>
+<li data-l="pt">O Airo instalado no computador da transmissão, com um destino pronto em <b>Configurações › Transmissão</b> (por exemplo, o YouTube).</li><li data-l="en">Airo installed on the streaming computer, with a destination ready under <b>Settings › Streaming</b> (YouTube, for example).</li>
+<li data-l="pt">O painel da igreja aberto no navegador desse mesmo computador.</li><li data-l="en">The church dashboard open in a browser on that same computer.</li>
+<li data-l="pt">Um endereço <code>https</code> no servidor do painel para receber o webhook.</li><li data-l="en">An <code>https</code> address on the dashboard server to receive the webhook.</li>
+</ul>
+<h2><span class="num">1</span><span data-l="pt">Prepare o Airo (uma vez)</span><span data-l="en">Set Airo up (once)</span></h2>
+<ol>
+<li data-l="pt">Em <b>Configurações › API e WebSocket</b>, ligue o <b>Servidor WebSocket</b>.</li><li data-l="en">Under <b>Settings › API and WebSocket</b>, turn on the <b>WebSocket server</b>.</li>
+<li data-l="pt">Em <b>Permissões por token</b>, crie o token “Painel da igreja” com <b>Leitura</b> e <b>Transmissão</b>. Copie o token: ele aparece inteiro uma única vez.</li><li data-l="en">Under <b>Token permissions</b>, create a token named “Church dashboard” with <b>Read</b> and <b>Broadcast</b>. Copy it: it is shown in full only once.</li>
+<li data-l="pt">Em <b>Configurações › Webhooks</b>, crie um webhook para <code>https://painel.suaigreja.org/hooks/airo</code> com os eventos <code>stream.started</code> e <code>stream.stopped</code>. Copie o segredo de assinatura (<code>whsec_…</code>).</li><li data-l="en">Under <b>Settings › Webhooks</b>, create a webhook to <code>https://painel.suaigreja.org/hooks/airo</code> with the <code>stream.started</code> and <code>stream.stopped</code> events. Copy the signing secret (<code>whsec_…</code>).</li>
+</ol>
+<h2><span class="num">2</span><span data-l="pt">Abra o Airo pelo painel</span><span data-l="en">Open Airo from the dashboard</span></h2>
+<p data-l="pt">O botão do painel é um link <code>airo://</code>. O navegador pede confirmação na primeira vez e o Airo abre com o preset do culto carregado.</p><p data-l="en">The dashboard button is a <code>airo://</code> link. The browser asks for confirmation the first time, and Airo opens with the service preset loaded.</p>
+<div class="doc-code"><div class="cap">html</div><pre tabindex="0">&lt;a href="airo://open?preset=Culto%20de%20domingo"&gt;Entrar ao vivo&lt;/a&gt;</pre></div>
+<h2><span class="num">3</span><span data-l="pt">Conecte e inicie a transmissão</span><span data-l="en">Connect and start the stream</span></h2>
+<p data-l="pt">Com o Airo aberto, o painel fala com ele por WebSocket em <code>localhost</code>. A conexão só abre quando o Airo já está de pé, então tentar de novo até conectar também serve para esperar o Airo abrir.</p><p data-l="en">With Airo open, the dashboard talks to it over WebSocket on <code>localhost</code>. The connection only opens once Airo is up, so retrying until it connects doubles as waiting for Airo to open.</p>
+<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">const AIRO = "ws://localhost:4600";
+
+function connectAiro(token, onEvent) {
+  return new Promise((resolve) =&gt; {
+    const tryConnect = () =&gt; {
+      const ws = new WebSocket(AIRO);
+      ws.onopen = () =&gt;
+        ws.send(JSON.stringify({ type: "hello", token, client: "Painel da igreja" }));
+      ws.onmessage = (e) =&gt; {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "hello" &amp;&amp; msg.ok) resolve(ws);
+        if (msg.type === "event") onEvent(msg.event, msg.data);
+      };
+      ws.onerror = () =&gt; setTimeout(tryConnect, 2000);
+    };
+    tryConnect();
+  });
+}
+
+const ws = await connectAiro(AIRO_TOKEN, (event, data) =&gt; {
+  if (event === "streaming") showLiveBadge(data.active);
+});
+
+startButton.onclick = () =&gt;
+  ws.send(JSON.stringify({ type: "function", id: "start", name: "StartStreaming" }));</pre></div>
+<p data-l="pt">O Airo responde <code>{"type": "result", "id": "start", "ok": true}</code>. Quando o destino confirma a conexão, chega o evento <code>streaming</code> com <code>active: true</code>. Se nenhum destino estiver pronto (sem chave, por exemplo), o <code>result</code> vem com <code>ok: false</code> e o motivo em <code>error</code>.</p><p data-l="en">Airo answers <code>{"type": "result", "id": "start", "ok": true}</code>. When the destination confirms the connection, the <code>streaming</code> event arrives with <code>active: true</code>. If no destination is ready (no stream key, for example), the <code>result</code> comes with <code>ok: false</code> and the reason in <code>error</code>.</p>
+<h2><span class="num">4</span><span data-l="pt">Receba o endereço da transmissão</span><span data-l="en">Receive the stream address</span></h2>
+<p data-l="pt">Quando a transmissão começa de fato, o Airo envia <code>stream.started</code> para o servidor do painel. O campo <code>watch_url</code> traz o endereço público do vídeo.</p><p data-l="en">When the stream is actually live, Airo sends <code>stream.started</code> to the dashboard server. The <code>watch_url</code> field carries the public address of the video.</p>
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+Content-Type: application/json
+X-Airo-Event: stream.started
+X-Airo-Delivery: dlv_9f31a2c4e7b0
+X-Airo-Signature: sha256=3f6c…
+
+{
+  "id": "dlv_9f31a2c4e7b0",
+  "event": "stream.started",
+  "timestamp": "2026-11-15T10:00:03-03:00",
+  "project": "Culto de domingo",
+  "airo_version": "1.4.2",
+  "data": {
+    "destinations": ["YouTube"],
+    "watch_url": "https://www.youtube.com/watch?v=VIDEO_ID",
+    "resolution": "1920x1080",
+    "fps": 30,
+    "bitrate_kbps": 6000
+  }
+}</pre></div>
+<p data-l="pt">No servidor, confira a assinatura antes de confiar no corpo e guarde se a igreja está ao vivo:</p><p data-l="en">On the server, check the signature before trusting the body, then store whether the church is live:</p>
+<div class="doc-code"><div class="cap">server.js</div><pre tabindex="0">const crypto = require("crypto");
+const express = require("express");
+
+const SECRET = process.env.AIRO_WEBHOOK_SECRET; // whsec_…
+const app = express();
+
+app.post("/hooks/airo", express.raw({ type: "application/json" }), async (req, res) =&gt; {
+  const expected = Buffer.from(
+    "sha256=" + crypto.createHmac("sha256", SECRET).update(req.body).digest("hex"));
+  const received = Buffer.from(req.get("X-Airo-Signature") || "");
+  const valid = received.length === expected.length &amp;&amp; crypto.timingSafeEqual(received, expected);
+  if (!valid) return res.status(401).end();
+
+  const { id, event, data } = JSON.parse(req.body);
+  if (await alreadyProcessed(id)) return res.status(204).end();
+
+  if (event === "stream.started") await saveLive({ live: true, watchUrl: data.watch_url });
+  if (event === "stream.stopped") await saveLive({ live: false, watchUrl: null });
+  res.status(204).end();
+});</pre></div>
+<div class="doc-note" data-l="pt"><b>Entregas repetidas.</b> O Airo pode reenviar uma entrega com o mesmo <code>id</code>. Guarde os ids já processados e responda 2xx para os repetidos.</div><div class="doc-note" data-l="en"><b>Repeated deliveries.</b> Airo may resend a delivery with the same <code>id</code>. Keep the ids you have processed and answer 2xx to repeats.</div>
+<h2><span class="num">5</span><span data-l="pt">Mostre no site</span><span data-l="en">Show it on the website</span></h2>
+<p data-l="pt">O site pergunta ao seu servidor se há transmissão e monta o player com o endereço recebido:</p><p data-l="en">The website asks your server whether a stream is on and builds the player from the address it received:</p>
+<div class="doc-code"><div class="cap">site.js</div><pre tabindex="0">const { live, watchUrl } = await fetch("/api/live").then((r) =&gt; r.json());
+
+if (live) {
+  const videoId = new URL(watchUrl).searchParams.get("v");
+  player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+}
+player.hidden = !live;</pre></div>
+<div class="doc-note" data-l="pt"><b>Destino sem endereço.</b> Num servidor RTMP próprio, o Airo não tem como saber onde o vídeo aparece e <code>watch_url</code> vem <code>null</code>. Use então um endereço fixo do canal, como <code>https://www.youtube.com/embed/live_stream?channel=ID_DO_CANAL</code>.</div><div class="doc-note" data-l="en"><b>Destination without an address.</b> With a custom RTMP server, Airo cannot know where the video shows up and <code>watch_url</code> is <code>null</code>. Use a fixed channel address instead, such as <code>https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID</code>.</div>
+<h2><span class="num">6</span><span data-l="pt">Encerre a transmissão</span><span data-l="en">End the stream</span></h2>
+<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">ws.send(JSON.stringify({ type: "function", id: "stop", name: "StopStreaming" }));</pre></div>
+<p data-l="pt"><code>StopStreaming</code> para na hora, sem pedir confirmação ao operador, então peça a confirmação no painel. O Airo envia <code>stream.stopped</code> e o seu servidor tira o player do site.</p><p data-l="en"><code>StopStreaming</code> stops immediately, without asking the operator, so ask for confirmation in the dashboard. Airo sends <code>stream.stopped</code> and your server takes the player off the website.</p>
+<h2 data-l="pt">Cuidados</h2><h2 data-l="en">Things to watch</h2>
+<ul>
+<li data-l="pt">O token fica no navegador do painel. Use um token extra só com Leitura e Transmissão, nunca o principal.</li><li data-l="en">The token lives in the dashboard's browser. Use an extra token with only Read and Broadcast, never the main one.</li>
+<li data-l="pt">A conexão é <code>ws://</code>, sem TLS: funciona em <code>localhost</code> e na rede local, não pela internet.</li><li data-l="en">The connection is <code>ws://</code>, without TLS: it works on <code>localhost</code> and the local network, not over the internet.</li>
+<li data-l="pt">A partir de uma página <code>https</code>, os navegadores aceitam <code>ws://localhost</code>, mas bloqueiam <code>ws://</code> para um IP da rede. Por isso o painel abre no mesmo computador do Airo. Em outro computador, deixe o operador iniciar pelo Airo e use só os webhooks.</li><li data-l="en">From an <code>https</code> page, browsers accept <code>ws://localhost</code> but block <code>ws://</code> to a network IP. That is why the dashboard opens on the Airo computer. On another computer, let the operator start from Airo and rely on the webhooks alone.</li>
+</ul>
+<p class="doc-next"><a href="#docs-events"><span data-l="pt">Referência: webhooks e eventos →</span><span data-l="en">Reference: webhooks and events →</span></a></p>
+    </article>
+    <article data-doc="docs-events" hidden>
+<p class="eyebrow"><span class="dot"></span><span data-l="pt">Referência</span><span data-l="en">Reference</span></p>
+<h1 class="doc-title" data-l="pt">Webhooks e eventos</h1><h1 class="doc-title" data-l="en">Webhooks and events</h1>
+<p class="doc-lede" data-l="pt">O Airo avisa outros sistemas quando algo acontece, enviando um pedido HTTP com JSON para o endereço cadastrado em Configurações › Webhooks.</p><p class="doc-lede" data-l="en">Airo notifies other systems when something happens by sending an HTTP request with JSON to the address registered under Settings › Webhooks.</p>
+<h2 data-l="pt">O pedido</h2><h2 data-l="en">The request</h2>
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+Content-Type: application/json
+User-Agent: Airo/1.4.2
+X-Airo-Event: input.program
+X-Airo-Delivery: dlv_9f31a2c4e7b0
+X-Airo-Signature: sha256=3f6c…
+
+{
+  "id": "dlv_9f31a2c4e7b0",
+  "event": "input.program",
+  "timestamp": "2026-11-15T10:42:18-03:00",
+  "project": "Culto de domingo",
+  "airo_version": "1.4.2",
+  "data": {
+    "input": { "id": 4, "number": 1, "name": "Câmera Púlpito", "type": "camera" },
+    "previous": { "id": 7, "number": 2, "name": "Câmera Geral", "type": "camera" },
+    "transition": "fade",
+    "duration_ms": 500
+  }
+}</pre></div>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Campo</span><span data-l="en">Field</span></th><th><span data-l="pt">O que é</span><span data-l="en">What it is</span></th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><span data-l="pt">Identificador da entrega, o mesmo de <code>X-Airo-Delivery</code>. Use para ignorar repetidas.</span><span data-l="en">Delivery identifier, the same as <code>X-Airo-Delivery</code>. Use it to ignore repeats.</span></td></tr>
+<tr><td><code>event</code></td><td><span data-l="pt">Nome técnico do evento.</span><span data-l="en">Technical name of the event.</span></td></tr>
+<tr><td><code>timestamp</code></td><td><span data-l="pt">Quando aconteceu, em ISO 8601 com o fuso do computador.</span><span data-l="en">When it happened, ISO 8601 with the computer's time zone.</span></td></tr>
+<tr><td><code>project</code></td><td><span data-l="pt">Nome do preset aberto.</span><span data-l="en">Name of the open preset.</span></td></tr>
+<tr><td><code>data</code></td><td><span data-l="pt">Os dados do evento.</span><span data-l="en">The event data.</span></td></tr>
+</tbody></table></div>
+<h2 data-l="pt">Eventos</h2><h2 data-l="en">Events</h2>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Evento</span><span data-l="en">Event</span></th><th><span data-l="pt">Quando</span><span data-l="en">When</span></th><th><span data-l="pt"><code>data</code></span><span data-l="en"><code>data</code></span></th></tr></thead><tbody>
+<tr><td><code>stream.started</code></td><td><span data-l="pt">A transmissão começou e o destino confirmou.</span><span data-l="en">The stream started and the destination confirmed.</span></td><td><code>destinations</code>, <code>watch_url</code>, <code>resolution</code>, <code>fps</code>, <code>bitrate_kbps</code></td></tr>
+<tr><td><code>stream.stopped</code></td><td><span data-l="pt">A transmissão terminou.</span><span data-l="en">The stream ended.</span></td><td><code>duration_s</code></td></tr>
+<tr><td><code>stream.reconnecting</code></td><td><span data-l="pt">Um destino parou de enviar depois de ter enviado.</span><span data-l="en">A destination stopped sending after having sent.</span></td><td><code>stalled_destinations</code>, <code>attempt</code></td></tr>
+<tr><td><code>recording.started</code></td><td><span data-l="pt">A gravação começou.</span><span data-l="en">Recording started.</span></td><td><code>file</code>, <code>format</code></td></tr>
+<tr><td><code>recording.stopped</code></td><td><span data-l="pt">A gravação terminou.</span><span data-l="en">Recording ended.</span></td><td><code>file</code>, <code>duration_s</code>, <code>size_mb</code></td></tr>
+<tr><td><code>input.program</code></td><td><span data-l="pt">Um input foi para o program.</span><span data-l="en">An input went to program.</span></td><td><code>input</code>, <code>previous</code>, <code>transition</code>, <code>duration_ms</code></td></tr>
+<tr><td><code>input.preview</code></td><td><span data-l="pt">Um input foi para o preview.</span><span data-l="en">An input went to preview.</span></td><td><code>input</code></td></tr>
+<tr><td><code>overlay.on</code> / <code>overlay.off</code></td><td><span data-l="pt">Um overlay (1 a 4) entrou ou saiu.</span><span data-l="en">An overlay (1 to 4) came on or went off.</span></td><td><code>overlay</code>, <code>input</code></td></tr>
+<tr><td><code>preset.loaded</code></td><td><span data-l="pt">Um preset foi aberto.</span><span data-l="en">A preset was opened.</span></td><td><code>preset</code>, <code>path</code>, <code>inputs</code></td></tr>
+<tr><td><code>app.started</code></td><td><span data-l="pt">O Airo terminou de abrir.</span><span data-l="en">Airo finished opening.</span></td><td><code>version</code>, <code>machine</code></td></tr>
+</tbody></table></div>
+<h2 data-l="pt">Conferir a assinatura</h2><h2 data-l="en">Checking the signature</h2>
+<p data-l="pt"><code>X-Airo-Signature</code> é <code>sha256=</code> seguido do HMAC-SHA256, em hexadecimal minúsculo, do corpo exato recebido, usando o segredo (<code>whsec_…</code>) mostrado no cadastro. Compare em tempo constante e recuse se não bater.</p><p data-l="en"><code>X-Airo-Signature</code> is <code>sha256=</code> followed by the lowercase hex HMAC-SHA256 of the exact body received, using the secret (<code>whsec_…</code>) shown when you register the webhook. Compare in constant time and reject on mismatch.</p>
+<div class="doc-code"><div class="cap">server.py</div><pre tabindex="0">import hashlib, hmac, os
+from flask import Flask, abort, request
+
+SECRET = os.environ["AIRO_WEBHOOK_SECRET"].encode()  # whsec_…
+app = Flask(__name__)
+
+@app.post("/hooks/airo")
+def airo():
+    body = request.get_data()
+    expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
+    received = request.headers.get("X-Airo-Signature", "").encode("latin-1", "replace")
+    if not hmac.compare_digest(expected.encode(), received):
+        abort(401)
+    delivery = request.get_json()
+    print(delivery["event"], delivery["data"])
+    return "", 204</pre></div>
+<h2 data-l="pt">Entrega e tentativas</h2><h2 data-l="en">Delivery and retries</h2>
+<ul>
+<li data-l="pt"><b>Sucesso</b> é qualquer resposta 2xx. Outra resposta, falta de conexão ou tempo esgotado conta como falha.</li><li data-l="en"><b>Success</b> is any 2xx response. Any other response, a failed connection or a timeout counts as a failure.</li>
+<li data-l="pt"><b>Tempo limite</b> por envio: 2, 5 (padrão) ou 10 segundos.</li><li data-l="en"><b>Timeout</b> per attempt: 2, 5 (default) or 10 seconds.</li>
+<li data-l="pt"><b>Tentativas:</b> 1, 3 (padrão) ou 5, com intervalo crescente (10 s, 30 s, 90 s) ou fixo (10 s).</li><li data-l="en"><b>Attempts:</b> 1, 3 (default) or 5, with growing (10 s, 30 s, 90 s) or fixed (10 s) intervals.</li>
+<li data-l="pt"><b>Pausa automática:</b> depois de 3 entregas seguidas que falharam em todas as tentativas, o webhook pausa sozinho.</li><li data-l="en"><b>Automatic pause:</b> after 3 deliveries in a row fail every attempt, the webhook pauses itself.</li>
+<li data-l="pt"><b>Redirecionamento</b> não é seguido: um 3xx conta como falha.</li><li data-l="en"><b>Redirects</b> are not followed: a 3xx counts as a failure.</li>
+<li data-l="pt"><b>Histórico:</b> as últimas 50 entregas de cada webhook ficam guardadas por 7 dias, com reenvio.</li><li data-l="en"><b>History:</b> the last 50 deliveries of each webhook are kept for 7 days and can be resent.</li>
+<li data-l="pt">Enviar nunca trava o vídeo: tudo é assíncrono.</li><li data-l="en">Sending never blocks the video: everything is asynchronous.</li>
+</ul>
+<p class="doc-next"><a href="#docs"><span data-l="pt">Voltar para Começando →</span><span data-l="en">Back to Getting started →</span></a></p>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><svg viewBox="0 0 85 64" aria-hidden="true"><circle cx="31" cy="31" r="22" fill="none" stroke="#E6E8EC" stroke-width="18"></circle><rect x="44" y="0" width="18" height="62" rx="9" fill="#E6E8EC"></rect><circle cx="76" cy="55" r="9" fill="#F04438"></circle></svg>Airo</span>
+    <span data-i18n="footTag">Switcher de vídeo ao vivo para igrejas.</span>
+    <nav aria-label="Rodapé" data-i18n-aria="footAria">
+      <a href="#telas" data-i18n="navScreens">Telas</a>
+      <a href="#recursos" data-i18n="navFeatures">Recursos</a>
+      <a href="#remoto" data-i18n="navRemote">Remoto</a>
+      <a href="#integracoes" data-i18n="navApi">Integrações</a>
+      <a href="#pricing" data-i18n="navPricing">Preços</a>
+      <a href="#docs">Docs</a>
+      <a href="#baixar" data-i18n="navDownload">Baixar</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Idiomas: o português é o texto do próprio HTML; o inglês vem deste dicionário.
+  var en = {
+    navScreens: "Screens", navFeatures: "Features", navRemote: "Remote", navApi: "Integrations", navDownload: "Download", navPricing: "Pricing",
+    dlLinux: "Download for Linux",
+    dlNote: "15 days free with everything unlocked, then R$ 59.90 per month. <a href=\"#pricing\">See pricing</a>",
+    prEyebrow: "Pricing", prTitle: "One plan. Everything included.",
+    prLede: "No tiers and no features sold separately. Try the full Airo for 15 days and, if it works for your church, keep going for one flat monthly price.",
+    pr1Title: "15 days free",
+    pr1Text: "Download it, build the preset for your service and stream for real. Every feature is unlocked from day one.",
+    pr2Title: "R$ 59.90 per month",
+    pr2Text: "After the trial, the monthly subscription keeps everything as it is: the same features, the same presets, no plan to switch.",
+    prTrialTag: "15 DAYS FREE", prPrice: "R$ 59.90", prPer: "per month", prNote: "Monthly subscription, one price.",
+    prCta: "Start the free trial",
+    faqEyebrow: "Frequently asked questions", faqTitle: "Before you subscribe.",
+    faq1Q: "Do I need a credit card to try it?",
+    faq1A: "No. Download Airo and use it for 15 days with everything unlocked. You only enter a card if you decide to keep going.",
+    faq2Q: "What happens when the 15 days are over?",
+    faq2A: "Nothing is charged automatically. To keep using Airo, subscribe for R$ 59.90 per month. Your presets stay on your computer.",
+    faq3Q: "How many computers does a subscription cover?",
+    faq3A: "One. Each computer that runs Airo needs its own subscription.",
+    faq4Q: "Can I cancel whenever I want?",
+    faq4A: "Yes. There is no lock-in and no cancellation fee. Access continues until the end of the month you already paid for, and your presets stay on your computer.",
+    faq5Q: "Which payment methods do you accept?",
+    faq5A: "Credit card, billed monthly.",
+    faq6Q: "Is there a more expensive plan with more features?",
+    faq6A: "No. Airo has a single plan, and it includes every feature.", prInclTitle: "What's included",
+    prI1: "Every input type, including NDI / SRT and browser",
+    prI2: "Streaming to up to 3 destinations at once",
+    prI3: "Recording, four overlays and the service rundown",
+    prI4: "Audio mixer with meters and loudness",
+    prI5: "Control app, API, webhooks and plugins",
+    prI6: "macOS, Windows and Linux",
+    heroEyebrow: "Live video switcher for churches",
+    heroTitle: "<span class=\"line\">From <span class=\"pv\">preview</span> <em>to air</em>,</span><span class=\"line\">no surprises.</span>",
+    heroLede: "Cameras, lyrics, slides and streaming on one screen. <strong>Airo has the preview and program workflow your media team already knows</strong>, in plain language, built for the volunteers who run it.",
+    heroCta: "Try free for 15 days", heroCta2: "See the screens",
+    project: "Sunday service", saved: "1080p30 · saved 2 min ago", live: "LIVE", welcome: "Welcome",
+    demoKeys: "CUT or FADE take it to air · OV 1 toggles the lower third",
+    in1: "Pulpit camera", in2: "Wide camera", in3: "Worship lyrics", in4: "Sermon slides", in5: "Announcements video",
+    sc1: "[First line of the verse]", sc2: "[Second line of the verse]", scWord: "Sermon", scVerse: "[Scripture text]", scNotices: "This week's announcements",
+    volEyebrow: "Built for volunteers",
+    volTitle: "The person at the desk on Sunday isn't always a technician. The screen has to help.",
+    vol1Title: "Red is on air. Green is next.",
+    vol1Text: "The two colors mean the same thing everywhere: monitors, input cards and buttons. You know what the audience is seeing without reading a word.",
+    vol2Title: "Plain language, no stray jargon.",
+    vol2Text: "Clear labels and a short hint next to every option. Sensible defaults, so you can start without opening a single setting.",
+    vol3Title: "The whole service saved in a preset.",
+    vol3Text: "Open \"Sunday service\" and cameras, lyrics, lower thirds and streaming destinations come back exactly as you left them. Airo saves on its own every 5 minutes.",
+    shotsEyebrow: "Inside", shotsTitle: "The real Airo, screen by screen.",
+    shotsText: "Screenshots of the app with the sample project \"Evento de domingo\" (Sunday event) open, shown here in Portuguese.",
+    tab0: "Main screen", tab1: "Add input", tab2: "Properties", tab3: "Presets",
+    featEyebrow: "Features", featTitle: "What a switching desk needs, and nothing else.",
+    featText: "Preview, program, transitions and overlays work the way they do on a professional switcher, with no hidden menus.",
+    f1Title: "Everything is an input",
+    f1Text: "Every source shows up as a card with a live thumbnail. Organize them in tabs such as Cameras, Worship, Sermon and Announcements.",
+    chipCamera: "Camera", chipScreen: "Screen capture", chipVideo: "Video and audio", chipImage: "Image and color",
+    chipList: "List / Playlist", chipSlides: "PDF slides", chipTitle: "Title and lower third", chipBrowser: "Browser",
+    f2Title: "Lower thirds and logo on top",
+    f2Text: "Four overlay channels for lower thirds, logo and notices, plus Fade to Black to close.",
+    f3Title: "Up to 3 destinations at once",
+    f3Text: "YouTube, Facebook and your own RTMP server, each with its own quality. If the connection drops, Airo reconnects by itself. Stream keys live in the system keychain, never in the preset file.",
+    f4Title: "Audio in plain sight",
+    f4Text: "A mixer with a meter per channel, Master, A and B buses, noise gate and compressor per input, and a loudness reading of what is going to air.",
+    f5Title: "Service rundown",
+    f5Text: "Lay out the order of service in blocks and follow it item by item, with no hunting for inputs mid-service.",
+    f6Title: "Recording alongside",
+    f6Text: "Record while you stream, in MP4 or MOV, with automatic splitting by size or by time.",
+    f7Title: "Big screen on the second display",
+    f7Text: "Program goes out full screen to the projector or the church TV, straight from Airo.",
+    remEyebrow: "Remote control",
+    remTitle: "The cut in the hands of someone in the middle of the room.",
+    remText: "Airo Remote is the phone app for switching inputs and adjusting audio away from the desk, from anywhere in the room.",
+    rem1: "<b>Inputs and cut.</b> See what is on air, send an input to preview and cut.",
+    rem2: "<b>Audio.</b> Adjust volume and mute on each channel without going back to the desk.",
+    rem3: "<b>Pairing by code.</b> Point the phone camera at the code on Airo's screen, on the same church network.",
+    connected: "connected", pAudio: "Audio", pConn: "Connection",
+    apiEyebrow: "Integrations", apiTitle: "An API to connect Airo to everything else you run.",
+    apiText: "Commands over HTTP, real-time state over WebSocket and webhooks that notify other systems. All on the local network, with a token for each device.",
+    spec1: "Simple commands by URL: cut, toggle an overlay, start and stop streaming or recording.",
+    spec2: "Events and state in real time, for dashboards, tally lights and controllers.",
+    spec3: "One token per device, each with only the permissions it needs.",
+    spec4: "JSON POSTs signed with HMAC-SHA256, retried when delivery fails. Sending never blocks the video.",
+    spec5: "The Meu Hinário plugin brings hymns, lyrics and readings to the big screen.",
+    apiTab0: "Start streaming", apiTab1: "Stop streaming", apiTab2: "Cut to an input", apiTab3: "Receive events", apiTab4: "Webhook",
+    apiEvents: "Events", apiDocsCta: "Read the docs", apiGuideCta: "Guide: live stream on your church website", apiAria: "API examples",
+    dlTitle: "Ready for your next service.",
+    dlText: "Download Airo, open a preset template and make your first cut in minutes. The first 15 days are on us.",
+    dlMac: "Download for macOS", dlWin: "Download for Windows",
+    fact1Title: "macOS, Windows and Linux", fact1Text: "A native app on all three platforms.",
+    fact3Title: ".airo presets", fact3Text: "Take your whole service to another computer.",
+    footTag: "Live video switcher for churches.",
+    navAria: "Sections", langAria: "Language", demoAria: "Switcher demo", shotsAria: "Airo screens", footAria: "Footer"
+  };
+  // Textos que só o script escreve.
+  var ui = {
+    pt: {
+      api: [
+        "Uma chamada HTTP inicia a transmissão em todos os destinos ativos do preset.",
+        "A mesma função, ao contrário: encerra a transmissão em todos os destinos.",
+        "Coloca o input 2 no ar com um corte seco. Troque Cut por Fade para usar a transição.",
+        "Conecte por WebSocket, apresente-se com o token e receba cada evento do switcher no momento em que acontece.",
+        "O Airo envia um POST assinado para o endereço que você cadastrar. Este é o aviso de transmissão iniciada."
+      ],
+      onAir: "NO AR", demoAuto: "Demonstração automática. Clique num input para assumir o corte.",
+      demoManual: "Você está no corte: clique num input para mandar ao preview.",
+      shots: [
+        ["Tela principal do Airo: preview e program lado a lado, transições, mixer de áudio e a grade de inputs do culto.",
+         "Preview à esquerda, program à direita, transições no meio. Embaixo, os inputs do culto organizados em abas e os quatro overlays."],
+        ["Diálogo Adicionar input com a lista de tipos à esquerda e o formulário de câmera.",
+         "Adicionar um input é escolher o tipo, dar um nome que o voluntário reconheça e mandar direto para o preview."],
+        ["Painel de propriedades da Câmera Púlpito, com as abas Geral, Imagem, Posição, Áudio, Camadas e Gatilhos.",
+         "As propriedades abrem ao lado, sem cobrir o program, e cada ajuste vale na hora: imagem, posição, áudio, camadas e gatilhos."],
+        ["Tela de presets com modelos prontos, como Culto com 2 câmeras e Transmissão simples.",
+         "Comece por um modelo pronto ou abra o preset do culto de hoje. O arquivo .airo leva tudo para outro computador."]
+      ]
+    },
+    en: {
+      api: [
+        "One HTTP call starts streaming to every active destination in the preset.",
+        "The same function in reverse: it ends the stream on every destination.",
+        "Puts input 2 on air with a hard cut. Replace Cut with Fade to use the transition.",
+        "Connect over WebSocket, say hello with the token and get every switcher event the moment it happens.",
+        "Airo sends a signed POST to the address you register. This one reports that streaming has started."
+      ],
+      onAir: "ON AIR", demoAuto: "Automatic demo. Click an input to take over the cut.",
+      demoManual: "You have the cut: click an input to send it to preview.",
+      shots: [
+        ["Airo's main screen: preview and program side by side, transitions, audio mixer and the grid of inputs for the service.",
+         "Preview on the left, program on the right, transitions in between. Below, the service inputs organized in tabs and the four overlays."],
+        ["The Add input dialog with the list of types on the left and the camera form.",
+         "Adding an input means picking the type, giving it a name a volunteer will recognize and sending it straight to preview."],
+        ["Properties panel for the pulpit camera, with the General, Image, Position, Audio, Layers and Triggers tabs.",
+         "Properties open on the side without covering program, and every change applies right away: image, position, audio, layers and triggers."],
+        ["The presets screen with ready-made templates, such as a two-camera service and a simple stream.",
+         "Start from a template or open the preset for today's service. The .airo file carries everything to another computer."]
+      ]
+    }
+  };
+  var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-i18n]"));
+  var ariaNodes = Array.prototype.slice.call(document.querySelectorAll("[data-i18n-aria]"));
+  var pt = {};
+  nodes.forEach(function (node) { pt[node.dataset.i18n] = node.innerHTML; });
+  ariaNodes.forEach(function (node) { pt[node.dataset.i18nAria] = node.getAttribute("aria-label"); });
+  var dict = { pt: pt, en: en };
+  var lang = "pt";
+  function t(key) { return dict[lang][key] !== undefined ? dict[lang][key] : pt[key]; }
+
+  var names = { 1: "in1", 2: "in2", 3: "in3", 4: "in4", 5: "in5" };
+  var scenes = { 1: "#s-pulpito", 2: "#s-geral", 3: "#s-letra", 4: "#s-slides", 5: "#s-avisos" };
+  var state = { pvw: 2, pgm: 1 };
+  var cards = Array.prototype.slice.call(document.querySelectorAll("#inputs .in"));
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var auto = null;
+  var shotIndex = 0;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".shots .tab"));
+  var apiIndex = 0;
+  var apiTabs = Array.prototype.slice.call(document.querySelectorAll(".term-tabs .tab"));
+  var apiCode = [
+    "curl -H \"Authorization: Bearer $AIRO_TOKEN\" \\\n  \"http://192.168.0.10:4601/api/v1/function?name=StartStreaming\"\n\n{\"ok\": true}",
+    "curl -H \"Authorization: Bearer $AIRO_TOKEN\" \\\n  \"http://192.168.0.10:4601/api/v1/function?name=StopStreaming\"\n\n{\"ok\": true}",
+    "curl -H \"Authorization: Bearer $AIRO_TOKEN\" \\\n  \"http://192.168.0.10:4601/api/v1/function?name=Cut&input=2\"\n\n{\"ok\": true}",
+    "const ws = new WebSocket(\"ws://192.168.0.10:4600\");\n\nws.onopen = () =>\n  ws.send(JSON.stringify({ type: \"hello\", token: AIRO_TOKEN, client: \"Painel\" }));\n\nws.onmessage = (e) => {\n  const msg = JSON.parse(e.data);\n  if (msg.type === \"event\") console.log(msg.event, msg.data);\n};\n\n// streaming { active: true }\n// program   { input: { id: 4, number: 4, name: \"Boas-vindas\" } }",
+    "POST https://painel.suaigreja.org/hooks/airo\nContent-Type: application/json\nX-Airo-Event: stream.started\nX-Airo-Delivery: dlv_9f31a2c4e7b0\nX-Airo-Signature: sha256=3f6c…\n\n{\n  \"id\": \"dlv_9f31a2c4e7b0\",\n  \"event\": \"stream.started\",\n  \"timestamp\": \"2026-11-15T10:00:03-03:00\",\n  \"project\": \"Culto de domingo\",\n  \"airo_version\": \"1.4.2\",\n  \"data\": {\n    \"destinations\": [\"YouTube\"],\n    \"watch_url\": \"https://www.youtube.com/watch?v=VIDEO_ID\",\n    \"resolution\": \"1920x1080\",\n    \"fps\": 30,\n    \"bitrate_kbps\": 6000\n  }\n}"
+  ];
+  function showApi(index, focus) {
+    apiIndex = index;
+    apiTabs.forEach(function (tab, i) {
+      tab.setAttribute("aria-selected", String(i === index));
+      tab.tabIndex = i === index ? 0 : -1;
+    });
+    $("api-desc").textContent = ui[lang].api[index];
+    $("api-code").textContent = apiCode[index];
+    $("api-panel").setAttribute("aria-labelledby", "api-" + index);
+    if (focus) apiTabs[index].focus();
+  }
+  apiTabs.forEach(function (tab, i) {
+    tab.addEventListener("click", function () { showApi(i, false); });
+    tab.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowRight") showApi((i + 1) % apiTabs.length, true);
+      if (event.key === "ArrowLeft") showApi((i + apiTabs.length - 1) % apiTabs.length, true);
+    });
+  });
+  var shotFiles = ["img/principal.png", "img/adicionar-input.png", "img/propriedades.png", "img/presets.png"];
+
+  function render() {
+    $("pvw-use").setAttribute("href", scenes[state.pvw]);
+    $("pgm-use").setAttribute("href", scenes[state.pgm]);
+    $("pvw-name").textContent = state.pvw + " · " + t(names[state.pvw]);
+    $("pgm-name").textContent = state.pgm + " · " + t(names[state.pgm]);
+    cards.forEach(function (card) {
+      var id = Number(card.dataset.id);
+      var onAir = id === state.pgm;
+      var next = !onAir && id === state.pvw;
+      card.classList.toggle("is-pgm", onAir);
+      card.classList.toggle("is-pvw", next);
+      card.querySelector(".tally").textContent = onAir ? ui[lang].onAir : next ? "PREVIEW" : "";
+    });
+  }
+
+  function showShot(index, focus) {
+    shotIndex = index;
+    tabs.forEach(function (tab, i) {
+      tab.setAttribute("aria-selected", String(i === index));
+      tab.tabIndex = i === index ? 0 : -1;
+    });
+    $("shot-img").src = shotFiles[index];
+    $("shot-img").alt = ui[lang].shots[index][0];
+    $("shot-text").textContent = ui[lang].shots[index][1];
+    $("shot-panel").setAttribute("aria-labelledby", "tab-" + index);
+    if (focus) tabs[index].focus();
+  }
+
+  function setLang(next) {
+    lang = next === "en" ? "en" : "pt";
+    document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
+    nodes.forEach(function (node) { node.innerHTML = t(node.dataset.i18n); });
+    ariaNodes.forEach(function (node) { node.setAttribute("aria-label", t(node.dataset.i18nAria)); });
+    $("lang-pt").setAttribute("aria-pressed", String(lang === "pt"));
+    $("lang-en").setAttribute("aria-pressed", String(lang === "en"));
+    $("demo-hint").textContent = auto ? ui[lang].demoAuto : ui[lang].demoManual;
+    render();
+    showShot(shotIndex, false);
+    showApi(apiIndex, false);
+  }
+
+  // Deixa a cena antiga por cima e a apaga, revelando a nova (fade).
+  function fadeFrom(oldScene) {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 320 180");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    svg.setAttribute("class", "ghost-scene");
+    var use = document.createElementNS(ns, "use");
+    use.setAttribute("href", oldScene);
+    svg.appendChild(use);
+    $("pgm-screen").insertBefore(svg, $("lower"));
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { svg.style.opacity = "0"; });
+    });
+    setTimeout(function () { svg.remove(); }, 650);
+  }
+
+  function take(withFade) {
+    if (state.pvw === state.pgm) return;
+    var old = state.pgm;
+    state.pgm = state.pvw;
+    state.pvw = old;
+    render();
+    if (withFade && !reduced) fadeFrom(scenes[old]);
+  }
+
+  cards.forEach(function (card) {
+    card.addEventListener("click", function () {
+      var id = Number(card.dataset.id);
+      if (id === state.pgm) return;
+      state.pvw = id;
+      render();
+    });
+  });
+  $("btn-cut").addEventListener("click", function () { take(false); });
+  $("btn-fade").addEventListener("click", function () { take(true); });
+  $("btn-ov").addEventListener("click", function () {
+    var on = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", String(on));
+    $("lower").classList.toggle("on", on);
+  });
+
+  // Demonstração automática: escolhe o próximo input e faz um fade, até alguém mexer no switcher.
+  var order = [2, 3, 1, 4, 5];
+  var step = 0;
+  if (!reduced) {
+    auto = setInterval(function () {
+      if (step % 2 === 0) {
+        var turn = step / 2;
+        var next = order[turn % order.length];
+        state.pvw = next === state.pgm ? order[(turn + 1) % order.length] : next;
+        render();
+      } else {
+        take(true);
+      }
+      step += 1;
+    }, 1700);
+  }
+  function stopAuto() {
+    if (!auto) return;
+    clearInterval(auto);
+    auto = null;
+    $("demo-hint").textContent = ui[lang].demoManual;
+  }
+  document.querySelector(".console").addEventListener("pointerdown", stopAuto);
+  document.querySelector(".console").addEventListener("keydown", stopAuto);
+
+  shotFiles.forEach(function (src) { new Image().src = src; });
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener("click", function () { showShot(i, false); });
+    tab.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowRight") showShot((i + 1) % tabs.length, true);
+      if (event.key === "ArrowLeft") showShot((i + tabs.length - 1) % tabs.length, true);
+    });
+  });
+
+  var seconds = 42 * 60 + 10;
+  setInterval(function () {
+    seconds += 1;
+    var h = Math.floor(seconds / 3600), m = Math.floor(seconds / 60) % 60, s = seconds % 60;
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    $("clock").textContent = pad(h) + ":" + pad(m) + ":" + pad(s);
+  }, 1000);
+
+  // Páginas: #docs, #docs-site e #docs-events mostram a documentação; qualquer outra âncora é da página inicial.
+  var views = Array.prototype.slice.call(document.querySelectorAll("[data-view]"));
+  var articles = Array.prototype.slice.call(document.querySelectorAll("[data-doc]"));
+  var docLinks = Array.prototype.slice.call(document.querySelectorAll("[data-doc-link]"));
+  var navDocs = document.querySelector("[data-nav-docs]");
+  var docNames = articles.map(function (article) { return article.dataset.doc; });
+  var lastRoute = null;
+  function route() {
+    var name = location.hash.slice(1);
+    var doc = docNames.indexOf(name) >= 0 ? name : null;
+    views.forEach(function (view) { view.hidden = (view.dataset.view === "docs") !== Boolean(doc); });
+    articles.forEach(function (article) { article.hidden = article.dataset.doc !== doc; });
+    docLinks.forEach(function (link) {
+      if (link.dataset.docLink === doc) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+    });
+    if (doc) navDocs.setAttribute("aria-current", "page"); else navDocs.removeAttribute("aria-current");
+    var key = doc || "home";
+    if (key === lastRoute) return;
+    var cameFromDocs = lastRoute !== null && lastRoute !== "home";
+    lastRoute = key;
+    var target = !doc && name && name !== "topo" ? document.getElementById(name) : null;
+    if (doc || (cameFromDocs && !target)) window.scrollTo({ top: 0, behavior: "instant" });
+    else if (cameFromDocs && target) target.scrollIntoView({ behavior: "instant" });
+  }
+  window.addEventListener("hashchange", route);
+  route();
+
+  // Idioma: escolha guardada, senão inglês (o padrão do site).
+  var saved = null;
+  try { saved = localStorage.getItem("airo-site-lang"); } catch (error) { saved = null; }
+  setLang(saved || "en");
+  [$("lang-pt"), $("lang-en")].forEach(function (button) {
+    button.addEventListener("click", function () {
+      setLang(button.dataset.lang);
+      try { localStorage.setItem("airo-site-lang", lang); } catch (error) { /* sem armazenamento, só não lembra */ }
+    });
+  });
+})();
+</script>
