@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Documentação · Airo</title>
+<meta name="description" content="Documentação da API do Airo: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja.">
+<meta name="theme-color" content="#060709">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script>
+/* Idioma antes de desenhar, para não piscar: ?lang=, escolha guardada (a mesma chave da página
+   inicial) ou o idioma do navegador. Os dois idiomas estão no HTML em [data-l]. */
+(function () {
+  var lang = (/[?&]lang=(pt|en)\b/.exec(location.search) || [])[1];
+  if (!lang) { try { lang = localStorage.getItem("airo-site-lang"); } catch (e) { lang = null; } }
+  if (lang !== "pt" && lang !== "en") {
+    var preferred = (navigator.languages && navigator.languages[0]) || navigator.language || "";
+    lang = /^pt\b/i.test(preferred) ? "pt" : "en";
+  }
+  document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
+  document.documentElement.classList.add("js");
+})();
+</script>
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Documentação. O estilo comum (cores, navegação, rodapé) está em assets/site.css. */
+html[lang="en"] [data-l="pt"], html[lang="pt-BR"] [data-l="en"] { display: none !important; }
+html { scroll-padding-top: 104px; }
+.nav-links a[aria-current="page"] { color: var(--fg); background: rgba(255, 255, 255, .06); }
+
+/* ---------- Abertura ---------- */
+.docs-hero { position: relative; isolation: isolate; display: grid; gap: 22px; justify-items: start; padding-top: clamp(128px, 15vw, 172px); }
+.docs-hero::before {
+  content: ""; position: absolute; z-index: -1; inset: -40px 0 -60px;
+  background: radial-gradient(ellipse 40% 60% at 8% 30%, rgba(34, 197, 94, .1), transparent 70%), radial-gradient(ellipse 40% 60% at 70% 10%, rgba(240, 68, 56, .1), transparent 70%);
+  pointer-events: none;
+}
+.docs-hero::after {
+  content: ""; position: absolute; z-index: -1; inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 30% 20%, #000, transparent 70%); mask-image: radial-gradient(ellipse 60% 70% at 30% 20%, #000, transparent 70%);
+  pointer-events: none;
+}
+.docs-hero h1 { font: 600 clamp(40px, 6vw, 72px)/1 var(--font); letter-spacing: -.05em; max-width: 15ch; text-wrap: balance; }
+.docs-hero h1 em { color: #BFC3CB; }
+.docs-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; margin-top: 18px; }
+.docs-card {
+  position: relative; display: grid; gap: 8px; align-content: start; padding: 20px 22px 22px; border-radius: 18px;
+  border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); transition: border-color .2s, background .2s, transform .3s var(--ease);
+}
+.docs-card:hover { border-color: var(--line-3); background: rgba(255, 255, 255, .055); transform: translateY(-2px); }
+.docs-card small { font: 500 11.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.docs-card b { font-size: 17px; font-weight: 600; letter-spacing: -.015em; }
+.docs-card .d { color: var(--fg-2); font-size: 14.5px; line-height: 1.5; }
+.docs-card .go { position: absolute; top: 20px; right: 20px; width: 16px; height: 16px; color: var(--fg-3); transition: transform .2s var(--ease), color .2s; }
+.docs-card:hover .go { transform: translateX(3px); color: var(--fg); }
+@media (max-width: 760px) { .docs-cards { grid-template-columns: 1fr; } }
+
+/* ---------- Três colunas: menu, artigo e "nesta página" ---------- */
+.docs { max-width: 1280px; }
+.docs-grid { display: grid; grid-template-columns: 210px minmax(0, 1fr) 190px; gap: 48px; align-items: start; margin-top: 80px; }
+.docs-side, .docs-toc { position: sticky; top: 104px; max-height: calc(100vh - 124px); overflow-y: auto; scrollbar-width: none; }
+.side-group { margin: 22px 0 8px 12px; font: 500 11.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.side-group:first-child { margin-top: 0; }
+.docs-side a { display: block; padding: 8px 12px; border-radius: 10px; font-size: 14.5px; line-height: 1.35; color: var(--fg-2); transition: color .2s, background .2s; }
+.docs-side a:hover { color: var(--fg); background: rgba(255, 255, 255, .04); }
+.docs-side a.active { color: var(--fg); background: rgba(255, 255, 255, .07); }
+.toc-title { margin-bottom: 12px; font: 500 11.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.toc-list { display: grid; }
+.toc-list[hidden] { display: none; }
+.toc-list a { padding: 6px 0 6px 14px; border-left: 1px solid var(--line-2); font-size: 13.5px; line-height: 1.4; color: var(--fg-3); transition: color .2s, border-color .2s; }
+.toc-list a:hover { color: var(--fg); }
+.toc-list a.active { color: var(--fg); border-left-color: var(--fg); }
+.toc-list .num { display: none; }
+@media (max-width: 1180px) { .docs-grid { grid-template-columns: 210px minmax(0, 1fr); } .docs-toc { display: none; } }
+@media (max-width: 900px) { .docs-grid { grid-template-columns: minmax(0, 1fr); margin-top: 56px; } .docs-side { display: none; } }
+
+/* ---------- Artigo ---------- */
+.art { scroll-margin-top: 104px; }
+.art + .art { margin-top: 96px; padding-top: 72px; border-top: 1px solid var(--line); }
+.art .kicker { margin-bottom: 20px; }
+.art-title { font: 600 clamp(30px, 4vw, 44px)/1.08 var(--font); letter-spacing: -.04em; text-wrap: balance; }
+.doc-lede { margin-top: 16px; font-size: 18px; line-height: 1.6; color: var(--fg-2); text-wrap: pretty; }
+.art h3 { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 52px; font: 600 22px/1.3 var(--font); letter-spacing: -.02em; scroll-margin-top: 104px; }
+.art h3 .num { width: 30px; height: 30px; flex: none; border-radius: 50%; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); display: grid; place-items: center; font: 600 13px/1 var(--mono); color: var(--fg-2); }
+.h-anchor { margin-left: 2px; font: 500 18px/1 var(--mono); color: var(--fg-3); opacity: 0; transition: opacity .2s, color .2s; }
+.art h3:hover .h-anchor, .h-anchor:focus-visible { opacity: 1; }
+.h-anchor:hover { color: var(--fg); }
+.art p, .art li { font-size: 16px; line-height: 1.7; color: #C9CDD4; }
+.art > p, .art > ul, .art > ol { margin-top: 16px; max-width: 70ch; }
+.art > .doc-next { margin-top: 48px; max-width: none; }
+.art b { color: var(--fg); font-weight: 600; }
+.art code { padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); font: 500 .85em/1.4 var(--mono); color: #E3E6EB; overflow-wrap: anywhere; }
+.art > ol, .art > ul { display: grid; gap: 10px; }
+.art > ol { counter-reset: passo; }
+.art > ol > li { position: relative; padding-left: 38px; counter-increment: passo; }
+.art > ol > li::before { content: counter(passo); position: absolute; left: 0; top: 2px; width: 25px; height: 25px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-items: center; font: 600 11.5px/1 var(--mono); color: var(--fg-2); }
+.art > ul > li { position: relative; padding-left: 22px; }
+.art > ul > li::before { content: ""; position: absolute; left: 5px; top: .72em; width: 6px; height: 6px; border-radius: 50%; background: var(--fg-3); }
+
+.doc-table { margin-top: 20px; overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, .015); }
+.doc-table table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14.5px; }
+.doc-table th { padding: 12px 16px; text-align: left; background: rgba(255, 255, 255, .03); border-bottom: 1px solid var(--line); font: 500 11.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
+.doc-table th code { text-transform: none; }
+.doc-table td { padding: 12px 16px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.55; color: #C9CDD4; }
+.doc-table tbody tr:first-child td { border-top: 0; }
+.doc-table td:first-child { white-space: nowrap; color: var(--fg); }
+
+.doc-note { position: relative; margin-top: 20px; max-width: 70ch; padding: 15px 18px 15px 50px; border-radius: 14px; border: 1px solid rgba(138, 180, 255, .25); background: rgba(79, 139, 255, .07); font-size: 15px; line-height: 1.6; color: #C9CDD4; }
+.doc-note::before { content: "i"; position: absolute; left: 17px; top: 16px; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--blue); display: grid; place-items: center; font: 600 12px/1 var(--font); color: var(--blue); }
+
+.doc-code { margin-top: 20px; border-radius: 14px; border: 1px solid var(--line-2); background: linear-gradient(180deg, #0F1115, #0A0B0E); overflow: hidden; }
+.doc-code .cap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 42px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--line); font: 500 12px/1 var(--mono); color: var(--fg-3); }
+.copy { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-2); font: 500 12.5px/1 var(--font); color: var(--fg-2); transition: color .2s, background .2s, border-color .2s; }
+.copy:hover { color: var(--fg); background: rgba(255, 255, 255, .06); }
+.copy svg { width: 14px; height: 14px; }
+.copy.done { color: var(--pvw-text); border-color: rgba(34, 197, 94, .45); }
+.doc-code pre { margin: 0; padding: 16px 18px 18px; overflow-x: auto; font: 400 13px/1.7 var(--mono); color: #D5D8DE; tab-size: 2; }
+.tok-s { color: #9BE5B4; } .tok-c { color: #6E7480; } .tok-k { color: #B5CEFF; } .tok-f { color: #FFB4AB; }
+
+.doc-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 28px; }
+.doc-flow .node { flex: 1 1 110px; display: grid; gap: 4px; align-content: start; padding: 14px; border-radius: 12px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); }
+.doc-flow > :nth-child(3) { border-color: rgba(240, 68, 56, .55); background: rgba(240, 68, 56, .08); }
+.doc-flow b { font-size: 14px; font-weight: 600; color: var(--fg); }
+.doc-flow small { font-size: 12.5px; line-height: 1.4; color: var(--fg-3); }
+.doc-flow .arrow { align-self: center; color: var(--fg-3); }
+@media (max-width: 760px) { .doc-flow { flex-direction: column; } .doc-flow .node { flex: none; } .doc-flow .arrow { transform: rotate(90deg); align-self: flex-start; margin-left: 20px; } }
+
+.doc-next a { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); font-weight: 500; color: var(--fg); transition: border-color .2s, background .2s; }
+.doc-next a:hover { border-color: var(--line-3); background: rgba(255, 255, 255, .06); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 85 64">
+    <circle cx="31" cy="31" r="22" fill="none" stroke="#E6E8EC" stroke-width="18"/>
+    <rect x="44" y="0" width="18" height="62" rx="9" fill="#E6E8EC"/>
+    <circle cx="76" cy="55" r="9" fill="#F04438"/>
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></g></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="nav" id="nav">
+  <div class="nav-pill">
+    <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>Airo</a>
+    <nav class="nav-links" aria-label="Seções">
+      <a href="./#recursos"><span data-l="pt">Recursos</span><span data-l="en">Features</span></a>
+      <a href="./#demo"><span data-l="pt">Demonstração</span><span data-l="en">Demo</span></a>
+      <a href="./#telas"><span data-l="pt">Telas</span><span data-l="en">Screens</span></a>
+      <a href="./#remoto"><span data-l="pt">Remoto</span><span data-l="en">Remote</span></a>
+      <a href="docs.html" aria-current="page">API</a>
+      <a href="./#precos"><span data-l="pt">Preços</span><span data-l="en">Pricing</span></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Idioma">
+      <button type="button" data-lang="en" aria-pressed="false" aria-label="English">EN</button>
+      <button type="button" data-lang="pt" aria-pressed="true" aria-label="Português">PT</button>
+    </div>
+    <a class="btn btn-light sm" href="./#baixar"><span data-l="pt">Baixar</span><span data-l="en">Download</span></a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <header class="docs-hero">
+    <span class="kicker"><span class="dot b"></span><span data-l="pt">Documentação</span><span data-l="en">Documentation</span></span>
+    <h1><span data-l="pt">Ligue o Airo <em>ao resto da igreja.</em></span><span data-l="en">Connect Airo <em>to the rest of your church.</em></span></h1>
+    <p class="lede"><span data-l="pt">Comande o Airo pela rede local com HTTP e WebSocket, e receba um aviso por webhook sempre que algo acontece no ao vivo.</span><span data-l="en">Control Airo over the local network with HTTP and WebSocket, and get a webhook whenever something happens on air.</span></p>
+    <div class="docs-cards">
+      <a class="docs-card" href="#comecando">
+        <small><span data-l="pt">Começando</span><span data-l="en">Getting started</span></small>
+        <b><span data-l="pt">Começando com a API</span><span data-l="en">Getting started with the API</span></b>
+        <span class="d"><span data-l="pt">Ligue a API, crie um token e faça a primeira chamada.</span><span data-l="en">Turn the API on, create a token and make your first call.</span></span>
+        <svg class="go" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+      <a class="docs-card" href="#site-da-igreja">
+        <small><span data-l="pt">Guia</span><span data-l="en">Guide</span></small>
+        <b><span data-l="pt">Transmissão no site da igreja</span><span data-l="en">Live stream on your church website</span></b>
+        <span class="d"><span data-l="pt">O painel inicia a transmissão e o site mostra o player sozinho.</span><span data-l="en">The dashboard starts the stream and the website shows the player by itself.</span></span>
+        <svg class="go" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+      <a class="docs-card" href="#webhooks">
+        <small><span data-l="pt">Referência</span><span data-l="en">Reference</span></small>
+        <b><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></b>
+        <span class="d"><span data-l="pt">Os avisos que o Airo envia, a assinatura e as novas tentativas.</span><span data-l="en">The notifications Airo sends, the signature and the retries.</span></span>
+        <svg class="go" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <div class="docs-grid">
+    <aside class="docs-side">
+      <nav aria-label="Documentação" id="docs-side">
+        <p class="side-group"><span data-l="pt">Começando</span><span data-l="en">Getting started</span></p>
+        <a href="#comecando" data-art="comecando"><span data-l="pt">Começando com a API</span><span data-l="en">Getting started with the API</span></a>
+        <p class="side-group"><span data-l="pt">Guias</span><span data-l="en">Guides</span></p>
+        <a href="#site-da-igreja" data-art="site-da-igreja"><span data-l="pt">Transmissão no site da igreja</span><span data-l="en">Live stream on your church website</span></a>
+        <p class="side-group"><span data-l="pt">Referência</span><span data-l="en">Reference</span></p>
+        <a href="#webhooks" data-art="webhooks"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></a>
+      </nav>
+    </aside>
+
+    <main class="docs-main" id="conteudo">
+    <article class="art" id="comecando">
+<span class="kicker"><span class="dot"></span><span data-l="pt">Começando</span><span data-l="en">Getting started</span></span>
+<h2 class="art-title"><span data-l="pt">Começando com a API</span><span data-l="en">Getting started with the API</span></h2>
+<p class="doc-lede" data-l="pt">O Airo pode ser controlado pela rede local por apps, painéis, controladores e scripts. Esta página mostra como ligar a API, criar um token e fazer a primeira chamada.</p><p class="doc-lede" data-l="en">Airo can be controlled over the local network by apps, dashboards, controllers and scripts. This page shows how to turn the API on, create a token and make your first call.</p>
+<h3 id="dois-jeitos-de-falar-com-o-airo"><span data-l="pt">Dois jeitos de falar com o Airo</span><span data-l="en">Two ways to talk to Airo</span></h3>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt"></span><span data-l="en"></span></th><th><span data-l="pt">WebSocket</span><span data-l="en">WebSocket</span></th><th><span data-l="pt">HTTP</span><span data-l="en">HTTP</span></th></tr></thead><tbody>
+<tr><td><span data-l="pt">Porta padrão</span><span data-l="en">Default port</span></td><td><code>4600</code></td><td><code>4601</code></td></tr>
+<tr><td><span data-l="pt">Para quê</span><span data-l="en">Best for</span></td><td><span data-l="pt">Controle em tempo real e eventos</span><span data-l="en">Real-time control and events</span></td><td><span data-l="pt">Comandos simples por URL</span><span data-l="en">Simple commands by URL</span></td></tr>
+<tr><td><span data-l="pt">Endereço</span><span data-l="en">Address</span></td><td><code>ws://IP:4600</code></td><td><code>http://IP:4601/api/v1</code></td></tr>
+</tbody></table></div>
+<p data-l="pt">Os dois usam os mesmos tokens e executam as mesmas funções. No próprio computador do Airo, use <code>localhost</code> no lugar do IP.</p><p data-l="en">Both use the same tokens and run the same functions. On the Airo computer itself, use <code>localhost</code> instead of the IP.</p>
+<h3 id="ligar-a-api"><span data-l="pt">Ligar a API</span><span data-l="en">Turn the API on</span></h3>
+<ol>
+<li data-l="pt">No Airo, abra <b>Configurações › API e WebSocket</b>.</li><li data-l="en">In Airo, open <b>Settings › API and WebSocket</b>.</li>
+<li data-l="pt">Ligue o <b>Servidor WebSocket</b>, a <b>API HTTP</b> ou os dois.</li><li data-l="en">Turn on the <b>WebSocket server</b>, the <b>HTTP API</b>, or both.</li>
+<li data-l="pt">Copie o <b>endereço</b> e o <b>token de acesso</b>.</li><li data-l="en">Copy the <b>address</b> and the <b>access token</b>.</li>
+</ol>
+<div class="doc-note" data-l="pt"><b>Rede local.</b> O aparelho precisa estar na mesma rede do computador do Airo. A API não usa TLS, então use só na rede da igreja.</div><div class="doc-note" data-l="en"><b>Local network.</b> The device must be on the same network as the Airo computer. The API does not use TLS, so keep it on the church network.</div>
+<h3 id="tokens-e-permissoes"><span data-l="pt">Tokens e permissões</span><span data-l="en">Tokens and permissions</span></h3>
+<p data-l="pt">O token principal pode tudo. Para cada aparelho ou programa, crie um token extra só com o que ele precisa, em <b>Permissões por token › + Novo token</b>. O token extra aparece inteiro uma única vez: copie na hora.</p><p data-l="en">The main token can do everything. For each device or program, create an extra token with only what it needs, under <b>Token permissions › + New token</b>. An extra token is shown in full only once, so copy it right away.</p>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Permissão</span><span data-l="en">Permission</span></th><th><span data-l="pt">Na tela</span><span data-l="en">On screen</span></th><th><span data-l="pt">Libera</span><span data-l="en">Allows</span></th></tr></thead><tbody>
+<tr><td><code>read</code></td><td><span data-l="pt">Leitura</span><span data-l="en">Read</span></td><td><span data-l="pt">O estado e os eventos</span><span data-l="en">State and events</span></td></tr>
+<tr><td><code>inputs</code></td><td><span data-l="pt">Inputs</span><span data-l="en">Inputs</span></td><td><span data-l="pt">Preview, program, transições, overlays e Fade to Black</span><span data-l="en">Preview, program, transitions, overlays and Fade to Black</span></td></tr>
+<tr><td><code>broadcast</code></td><td><span data-l="pt">Transmissão</span><span data-l="en">Broadcast</span></td><td><span data-l="pt">Gravar, transmitir, MultiCorder e replay</span><span data-l="en">Recording, streaming, MultiCorder and replay</span></td></tr>
+<tr><td><code>audio</code></td><td><span data-l="pt">Áudio</span><span data-l="en">Audio</span></td><td><span data-l="pt">Reservado para as funções de áudio</span><span data-l="en">Reserved for audio functions</span></td></tr>
+</tbody></table></div>
+<h3 id="primeira-chamada"><span data-l="pt">Primeira chamada</span><span data-l="en">First call</span></h3>
+<p data-l="pt">Leia o estado do switcher:</p><p data-l="en">Read the switcher state:</p>
+<div class="doc-code"><div class="cap">bash</div><pre tabindex="0">curl -H "Authorization: Bearer stk_..." \
+  "http://192.168.0.10:4601/api/v1/state"</pre></div>
+<div class="doc-code"><div class="cap">json</div><pre tabindex="0">{
+  "program":  {"id": 1, "number": 1, "name": "Câmera Púlpito"},
+  "preview":  {"id": 4, "number": 4, "name": "Boas-vindas"},
+  "overlays": [null, {"id": 9, "number": 9, "name": "Logo da igreja"}, null, null],
+  "ftb": false,
+  "recording": true,
+  "streaming": false,
+  "inputs": [
+    {"id": 1, "number": 1, "name": "Câmera Púlpito", "kind": "camera", "state": "program"},
+    {"id": 2, "number": 2, "name": "Câmera Geral", "kind": "camera", "state": "off"}
+  ]
+}</pre></div>
+<h3 id="executar-uma-funcao"><span data-l="pt">Executar uma função</span><span data-l="en">Run a function</span></h3>
+<p data-l="pt">As funções têm os nomes conhecidos de quem usa mesas de corte por software, sem diferenciar maiúsculas.</p><p data-l="en">Functions use the names familiar from software switchers, and are not case sensitive.</p>
+<div class="doc-code"><div class="cap">bash</div><pre tabindex="0">curl -H "Authorization: Bearer stk_..." \
+  "http://192.168.0.10:4601/api/v1/function?name=Cut&amp;input=2"
+
+curl -X POST -H "Authorization: Bearer stk_..." \
+  -d "name=PreviewInput&amp;input=3" "http://192.168.0.10:4601/api/v1/function"</pre></div>
+<p data-l="pt">O parâmetro <code>input</code> aceita a posição na grade (<code>2</code>), o nome exato (<code>Câmera Geral</code>) ou o id estável (<code>id:12</code>).</p><p data-l="en">The <code>input</code> parameter accepts the grid position (<code>2</code>), the exact name (<code>Câmera Geral</code>) or the stable id (<code>id:12</code>).</p>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Função</span><span data-l="en">Function</span></th><th><span data-l="pt">Permissão</span><span data-l="en">Permission</span></th><th><span data-l="pt">O que faz</span><span data-l="en">What it does</span></th></tr></thead><tbody>
+<tr><td><code>Cut</code></td><td><code>inputs</code></td><td><span data-l="pt">Corte seco do preview para o program. Com <code>input</code>, ele vai ao preview antes.</span><span data-l="en">Hard cut from preview to program. With <code>input</code>, it goes to preview first.</span></td></tr>
+<tr><td><code>QuickPlay</code></td><td><code>inputs</code></td><td><span data-l="pt">Leva o preview ao ar com a transição padrão.</span><span data-l="en">Takes preview to air with the default transition.</span></td></tr>
+<tr><td><code>Transition</code></td><td><code>inputs</code></td><td><span data-l="pt">Leva o preview ao ar com <code>transition</code>: Fade, Merge, Wipe ou Stinger.</span><span data-l="en">Takes preview to air with <code>transition</code>: Fade, Merge, Wipe or Stinger.</span></td></tr>
+<tr><td><code>PreviewInput</code></td><td><code>inputs</code></td><td><span data-l="pt">Põe o input no preview.</span><span data-l="en">Puts the input in preview.</span></td></tr>
+<tr><td><code>OverlayInput1In</code> … <code>4In</code></td><td><code>inputs</code></td><td><span data-l="pt">Liga o input no overlay.</span><span data-l="en">Turns the input on in that overlay.</span></td></tr>
+<tr><td><code>OverlayInput1Out</code> … <code>4Out</code></td><td><code>inputs</code></td><td><span data-l="pt">Desliga o overlay.</span><span data-l="en">Turns the overlay off.</span></td></tr>
+<tr><td><code>FadeToBlack</code></td><td><code>inputs</code></td><td><span data-l="pt">Liga ou desliga o Fade to Black.</span><span data-l="en">Toggles Fade to Black.</span></td></tr>
+<tr><td><code>StartRecording</code> / <code>StopRecording</code></td><td><code>broadcast</code></td><td><span data-l="pt">Começa ou para a gravação.</span><span data-l="en">Starts or stops recording.</span></td></tr>
+<tr><td><code>StartStreaming</code> / <code>StopStreaming</code></td><td><code>broadcast</code></td><td><span data-l="pt">Começa ou para a transmissão. Falha se nenhum destino está pronto.</span><span data-l="en">Starts or stops streaming. Fails if no destination is ready.</span></td></tr>
+</tbody></table></div>
+<div class="doc-note" data-l="pt"><b>Sem confirmação.</b> <code>StopStreaming</code> e <code>StopRecording</code> param na hora, sem perguntar ao operador. Peça a confirmação no seu sistema.</div><div class="doc-note" data-l="en"><b>No confirmation.</b> <code>StopStreaming</code> and <code>StopRecording</code> stop immediately, without asking the operator. Ask for confirmation in your own system.</div>
+<h3 id="respostas"><span data-l="pt">Respostas</span><span data-l="en">Responses</span></h3>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Status</span><span data-l="en">Status</span></th><th><span data-l="pt">Corpo</span><span data-l="en">Body</span></th><th><span data-l="pt">Quando</span><span data-l="en">When</span></th></tr></thead><tbody>
+<tr><td><code>200</code></td><td><code>{"ok": true}</code></td><td><span data-l="pt">Deu certo (ou o estado, em <code>/state</code>).</span><span data-l="en">It worked (or the state, on <code>/state</code>).</span></td></tr>
+<tr><td><code>400</code></td><td><code>{"ok": false, "error": "…"}</code></td><td><span data-l="pt">A função falhou: nome, input ou parâmetro inválido.</span><span data-l="en">The function failed: invalid name, input or parameter.</span></td></tr>
+<tr><td><code>401</code></td><td><code>{"ok": false, "error": "…"}</code></td><td><span data-l="pt">Sem token ou token errado.</span><span data-l="en">Missing or wrong token.</span></td></tr>
+<tr><td><code>403</code></td><td><code>{"ok": false, "code": "forbidden"}</code></td><td><span data-l="pt">O token não tem a permissão da função.</span><span data-l="en">The token lacks the permission for that function.</span></td></tr>
+</tbody></table></div>
+<h3 id="websocket-em-cinco-mensagens"><span data-l="pt">WebSocket em cinco mensagens</span><span data-l="en">WebSocket in five messages</span></h3>
+<p data-l="pt">A primeira mensagem precisa ser um <code>hello</code> com o token, em até 5 segundos. Depois disso, o Airo aceita funções e empurra eventos sempre que algo muda.</p><p data-l="en">The first message must be a <code>hello</code> carrying the token, within 5 seconds. After that, Airo accepts functions and pushes events whenever something changes.</p>
+<div class="doc-code"><div class="cap">ws://192.168.0.10:4600</div><pre tabindex="0">→ {"type": "hello", "token": "stk_...", "client": "Meu painel"}
+← {"type": "hello", "ok": true, "server": "Airo", "protocol": 1, "permissions": ["read", "broadcast"]}
+
+→ {"type": "function", "id": "1", "name": "StartStreaming"}
+← {"type": "result", "id": "1", "ok": true}
+← {"type": "event", "event": "streaming", "data": {"active": true}}</pre></div>
+<p class="doc-next"><a href="#site-da-igreja"><span data-l="pt">Guia: transmissão ao vivo no site da igreja →</span><span data-l="en">Guide: live stream on your church website →</span></a></p>
+    </article>
+    <article class="art" id="site-da-igreja">
+<span class="kicker"><span class="dot"></span><span data-l="pt">Guia</span><span data-l="en">Guide</span></span>
+<h2 class="art-title"><span data-l="pt">Transmissão ao vivo no site da igreja</span><span data-l="en">Live stream on your church website</span></h2>
+<p class="doc-lede" data-l="pt">Neste guia, o painel da igreja abre o Airo, inicia a transmissão e recebe o endereço do vídeo para colocar o player no site. Ninguém precisa copiar e colar link.</p><p class="doc-lede" data-l="en">In this guide, the church dashboard opens Airo, starts the stream and receives the video address to put the player on the website. Nobody has to copy and paste a link.</p>
+<div class="doc-flow">
+<div class="node"><b><span data-l="pt">Painel da igreja</span><span data-l="en">Church dashboard</span></b><small><span data-l="pt">botão Entrar ao vivo</span><span data-l="en">Go live button</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Airo</span><span data-l="en">Airo</span></b><small><span data-l="pt">abre o preset e transmite</span><span data-l="en">opens the preset and streams</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">YouTube</span><span data-l="en">YouTube</span></b><small><span data-l="pt">recebe o vídeo</span><span data-l="en">receives the video</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Servidor do painel</span><span data-l="en">Dashboard server</span></b><small><span data-l="pt">recebe o webhook</span><span data-l="en">gets the webhook</span></small></div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="node"><b><span data-l="pt">Site</span><span data-l="en">Website</span></b><small><span data-l="pt">mostra o player</span><span data-l="en">shows the player</span></small></div>
+</div>
+<h3 id="o-que-voce-precisa"><span data-l="pt">O que você precisa</span><span data-l="en">What you need</span></h3>
+<ul>
+<li data-l="pt">O Airo instalado no computador da transmissão, com um destino pronto em <b>Configurações › Transmissão</b> (por exemplo, o YouTube).</li><li data-l="en">Airo installed on the streaming computer, with a destination ready under <b>Settings › Streaming</b> (YouTube, for example).</li>
+<li data-l="pt">O painel da igreja aberto no navegador desse mesmo computador.</li><li data-l="en">The church dashboard open in a browser on that same computer.</li>
+<li data-l="pt">Um endereço <code>https</code> no servidor do painel para receber o webhook.</li><li data-l="en">An <code>https</code> address on the dashboard server to receive the webhook.</li>
+</ul>
+<h3 class="step" id="passo-1-prepare-o-airo-uma-vez"><span class="num">1</span><span data-l="pt">Prepare o Airo (uma vez)</span><span data-l="en">Set Airo up (once)</span></h3>
+<ol>
+<li data-l="pt">Em <b>Configurações › API e WebSocket</b>, ligue o <b>Servidor WebSocket</b>.</li><li data-l="en">Under <b>Settings › API and WebSocket</b>, turn on the <b>WebSocket server</b>.</li>
+<li data-l="pt">Em <b>Permissões por token</b>, crie o token “Painel da igreja” com <b>Leitura</b> e <b>Transmissão</b>. Copie o token: ele aparece inteiro uma única vez.</li><li data-l="en">Under <b>Token permissions</b>, create a token named “Church dashboard” with <b>Read</b> and <b>Broadcast</b>. Copy it: it is shown in full only once.</li>
+<li data-l="pt">Em <b>Configurações › Webhooks</b>, crie um webhook para <code>https://painel.suaigreja.org/hooks/airo</code> com os eventos <code>stream.started</code> e <code>stream.stopped</code>. Copie o segredo de assinatura (<code>whsec_…</code>).</li><li data-l="en">Under <b>Settings › Webhooks</b>, create a webhook to <code>https://painel.suaigreja.org/hooks/airo</code> with the <code>stream.started</code> and <code>stream.stopped</code> events. Copy the signing secret (<code>whsec_…</code>).</li>
+</ol>
+<h3 class="step" id="passo-2-abra-o-airo-pelo-painel"><span class="num">2</span><span data-l="pt">Abra o Airo pelo painel</span><span data-l="en">Open Airo from the dashboard</span></h3>
+<p data-l="pt">O botão do painel é um link <code>airo://</code>. O navegador pede confirmação na primeira vez e o Airo abre com o preset do evento carregado.</p><p data-l="en">The dashboard button is a <code>airo://</code> link. The browser asks for confirmation the first time, and Airo opens with the event preset loaded.</p>
+<div class="doc-code"><div class="cap">html</div><pre tabindex="0">&lt;a href="airo://open?preset=Evento%20de%20domingo"&gt;Entrar ao vivo&lt;/a&gt;</pre></div>
+<h3 class="step" id="passo-3-conecte-e-inicie-a-transmissao"><span class="num">3</span><span data-l="pt">Conecte e inicie a transmissão</span><span data-l="en">Connect and start the stream</span></h3>
+<p data-l="pt">Com o Airo aberto, o painel fala com ele por WebSocket em <code>localhost</code>. A conexão só abre quando o Airo já está de pé, então tentar de novo até conectar também serve para esperar o Airo abrir.</p><p data-l="en">With Airo open, the dashboard talks to it over WebSocket on <code>localhost</code>. The connection only opens once Airo is up, so retrying until it connects doubles as waiting for Airo to open.</p>
+<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">const AIRO = "ws://localhost:4600";
+
+function connectAiro(token, onEvent) {
+  return new Promise((resolve) =&gt; {
+    const tryConnect = () =&gt; {
+      const ws = new WebSocket(AIRO);
+      ws.onopen = () =&gt;
+        ws.send(JSON.stringify({ type: "hello", token, client: "Painel da igreja" }));
+      ws.onmessage = (e) =&gt; {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "hello" &amp;&amp; msg.ok) resolve(ws);
+        if (msg.type === "event") onEvent(msg.event, msg.data);
+      };
+      ws.onerror = () =&gt; setTimeout(tryConnect, 2000);
+    };
+    tryConnect();
+  });
+}
+
+const ws = await connectAiro(AIRO_TOKEN, (event, data) =&gt; {
+  if (event === "streaming") showLiveBadge(data.active);
+});
+
+startButton.onclick = () =&gt;
+  ws.send(JSON.stringify({ type: "function", id: "start", name: "StartStreaming" }));</pre></div>
+<p data-l="pt">O Airo responde <code>{"type": "result", "id": "start", "ok": true}</code>. Quando o destino confirma a conexão, chega o evento <code>streaming</code> com <code>active: true</code>. Se nenhum destino estiver pronto (sem chave, por exemplo), o <code>result</code> vem com <code>ok: false</code> e o motivo em <code>error</code>.</p><p data-l="en">Airo answers <code>{"type": "result", "id": "start", "ok": true}</code>. When the destination confirms the connection, the <code>streaming</code> event arrives with <code>active: true</code>. If no destination is ready (no stream key, for example), the <code>result</code> comes with <code>ok: false</code> and the reason in <code>error</code>.</p>
+<h3 class="step" id="passo-4-receba-o-endereco-da-transmissao"><span class="num">4</span><span data-l="pt">Receba o endereço da transmissão</span><span data-l="en">Receive the stream address</span></h3>
+<p data-l="pt">Quando a transmissão começa de fato, o Airo envia <code>stream.started</code> para o servidor do painel. O campo <code>watch_url</code> traz o endereço público do vídeo.</p><p data-l="en">When the stream is actually live, Airo sends <code>stream.started</code> to the dashboard server. The <code>watch_url</code> field carries the public address of the video.</p>
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+Content-Type: application/json
+X-Airo-Event: stream.started
+X-Airo-Delivery: dlv_9f31a2c4e7b0
+X-Airo-Signature: sha256=3f6c…
+
+{
+  "id": "dlv_9f31a2c4e7b0",
+  "event": "stream.started",
+  "timestamp": "2026-11-15T10:00:03-03:00",
+  "project": "Evento de domingo",
+  "airo_version": "1.4.2",
+  "data": {
+    "destinations": ["YouTube"],
+    "watch_url": "https://www.youtube.com/watch?v=VIDEO_ID",
+    "resolution": "1920x1080",
+    "fps": 30,
+    "bitrate_kbps": 6000
+  }
+}</pre></div>
+<p data-l="pt">No servidor, confira a assinatura antes de confiar no corpo e guarde se a igreja está ao vivo:</p><p data-l="en">On the server, check the signature before trusting the body, then store whether the church is live:</p>
+<div class="doc-code"><div class="cap">server.js</div><pre tabindex="0">const crypto = require("crypto");
+const express = require("express");
+
+const SECRET = process.env.AIRO_WEBHOOK_SECRET; // whsec_…
+const app = express();
+
+app.post("/hooks/airo", express.raw({ type: "application/json" }), async (req, res) =&gt; {
+  const expected = Buffer.from(
+    "sha256=" + crypto.createHmac("sha256", SECRET).update(req.body).digest("hex"));
+  const received = Buffer.from(req.get("X-Airo-Signature") || "");
+  const valid = received.length === expected.length &amp;&amp; crypto.timingSafeEqual(received, expected);
+  if (!valid) return res.status(401).end();
+
+  const { id, event, data } = JSON.parse(req.body);
+  if (await alreadyProcessed(id)) return res.status(204).end();
+
+  if (event === "stream.started") await saveLive({ live: true, watchUrl: data.watch_url });
+  if (event === "stream.stopped") await saveLive({ live: false, watchUrl: null });
+  res.status(204).end();
+});</pre></div>
+<div class="doc-note" data-l="pt"><b>Entregas repetidas.</b> O Airo pode reenviar uma entrega com o mesmo <code>id</code>. Guarde os ids já processados e responda 2xx para os repetidos.</div><div class="doc-note" data-l="en"><b>Repeated deliveries.</b> Airo may resend a delivery with the same <code>id</code>. Keep the ids you have processed and answer 2xx to repeats.</div>
+<h3 class="step" id="passo-5-mostre-no-site"><span class="num">5</span><span data-l="pt">Mostre no site</span><span data-l="en">Show it on the website</span></h3>
+<p data-l="pt">O site pergunta ao seu servidor se há transmissão e monta o player com o endereço recebido:</p><p data-l="en">The website asks your server whether a stream is on and builds the player from the address it received:</p>
+<div class="doc-code"><div class="cap">site.js</div><pre tabindex="0">const { live, watchUrl } = await fetch("/api/live").then((r) =&gt; r.json());
+
+if (live) {
+  const videoId = new URL(watchUrl).searchParams.get("v");
+  player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+}
+player.hidden = !live;</pre></div>
+<div class="doc-note" data-l="pt"><b>Destino sem endereço.</b> Num servidor RTMP próprio, o Airo não tem como saber onde o vídeo aparece e <code>watch_url</code> vem <code>null</code>. Use então um endereço fixo do canal, como <code>https://www.youtube.com/embed/live_stream?channel=ID_DO_CANAL</code>.</div><div class="doc-note" data-l="en"><b>Destination without an address.</b> With a custom RTMP server, Airo cannot know where the video shows up and <code>watch_url</code> is <code>null</code>. Use a fixed channel address instead, such as <code>https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID</code>.</div>
+<h3 class="step" id="passo-6-encerre-a-transmissao"><span class="num">6</span><span data-l="pt">Encerre a transmissão</span><span data-l="en">End the stream</span></h3>
+<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">ws.send(JSON.stringify({ type: "function", id: "stop", name: "StopStreaming" }));</pre></div>
+<p data-l="pt"><code>StopStreaming</code> para na hora, sem pedir confirmação ao operador, então peça a confirmação no painel. O Airo envia <code>stream.stopped</code> e o seu servidor tira o player do site.</p><p data-l="en"><code>StopStreaming</code> stops immediately, without asking the operator, so ask for confirmation in the dashboard. Airo sends <code>stream.stopped</code> and your server takes the player off the website.</p>
+<h3 id="cuidados"><span data-l="pt">Cuidados</span><span data-l="en">Things to watch</span></h3>
+<ul>
+<li data-l="pt">O token fica no navegador do painel. Use um token extra só com Leitura e Transmissão, nunca o principal.</li><li data-l="en">The token lives in the dashboard's browser. Use an extra token with only Read and Broadcast, never the main one.</li>
+<li data-l="pt">A conexão é <code>ws://</code>, sem TLS: funciona em <code>localhost</code> e na rede local, não pela internet.</li><li data-l="en">The connection is <code>ws://</code>, without TLS: it works on <code>localhost</code> and the local network, not over the internet.</li>
+<li data-l="pt">A partir de uma página <code>https</code>, os navegadores aceitam <code>ws://localhost</code>, mas bloqueiam <code>ws://</code> para um IP da rede. Por isso o painel abre no mesmo computador do Airo. Em outro computador, deixe o operador iniciar pelo Airo e use só os webhooks.</li><li data-l="en">From an <code>https</code> page, browsers accept <code>ws://localhost</code> but block <code>ws://</code> to a network IP. That is why the dashboard opens on the Airo computer. On another computer, let the operator start from Airo and rely on the webhooks alone.</li>
+</ul>
+<p class="doc-next"><a href="#webhooks"><span data-l="pt">Referência: webhooks e eventos →</span><span data-l="en">Reference: webhooks and events →</span></a></p>
+    </article>
+    <article class="art" id="webhooks">
+<span class="kicker"><span class="dot"></span><span data-l="pt">Referência</span><span data-l="en">Reference</span></span>
+<h2 class="art-title"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></h2>
+<p class="doc-lede" data-l="pt">O Airo avisa outros sistemas quando algo acontece, enviando um pedido HTTP com JSON para o endereço cadastrado em Configurações › Webhooks.</p><p class="doc-lede" data-l="en">Airo notifies other systems when something happens by sending an HTTP request with JSON to the address registered under Settings › Webhooks.</p>
+<h3 id="o-pedido"><span data-l="pt">O pedido</span><span data-l="en">The request</span></h3>
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+Content-Type: application/json
+User-Agent: Airo/1.4.2
+X-Airo-Event: input.program
+X-Airo-Delivery: dlv_9f31a2c4e7b0
+X-Airo-Signature: sha256=3f6c…
+
+{
+  "id": "dlv_9f31a2c4e7b0",
+  "event": "input.program",
+  "timestamp": "2026-11-15T10:42:18-03:00",
+  "project": "Evento de domingo",
+  "airo_version": "1.4.2",
+  "data": {
+    "input": { "id": 4, "number": 1, "name": "Câmera Púlpito", "type": "camera" },
+    "previous": { "id": 7, "number": 2, "name": "Câmera Geral", "type": "camera" },
+    "transition": "fade",
+    "duration_ms": 500
+  }
+}</pre></div>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Campo</span><span data-l="en">Field</span></th><th><span data-l="pt">O que é</span><span data-l="en">What it is</span></th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><span data-l="pt">Identificador da entrega, o mesmo de <code>X-Airo-Delivery</code>. Use para ignorar repetidas.</span><span data-l="en">Delivery identifier, the same as <code>X-Airo-Delivery</code>. Use it to ignore repeats.</span></td></tr>
+<tr><td><code>event</code></td><td><span data-l="pt">Nome técnico do evento.</span><span data-l="en">Technical name of the event.</span></td></tr>
+<tr><td><code>timestamp</code></td><td><span data-l="pt">Quando aconteceu, em ISO 8601 com o fuso do computador.</span><span data-l="en">When it happened, ISO 8601 with the computer's time zone.</span></td></tr>
+<tr><td><code>project</code></td><td><span data-l="pt">Nome do preset aberto.</span><span data-l="en">Name of the open preset.</span></td></tr>
+<tr><td><code>data</code></td><td><span data-l="pt">Os dados do evento.</span><span data-l="en">The event data.</span></td></tr>
+</tbody></table></div>
+<h3 id="eventos"><span data-l="pt">Eventos</span><span data-l="en">Events</span></h3>
+<div class="doc-table"><table><thead><tr><th><span data-l="pt">Evento</span><span data-l="en">Event</span></th><th><span data-l="pt">Quando</span><span data-l="en">When</span></th><th><span data-l="pt"><code>data</code></span><span data-l="en"><code>data</code></span></th></tr></thead><tbody>
+<tr><td><code>stream.started</code></td><td><span data-l="pt">A transmissão começou e o destino confirmou.</span><span data-l="en">The stream started and the destination confirmed.</span></td><td><code>destinations</code>, <code>watch_url</code>, <code>resolution</code>, <code>fps</code>, <code>bitrate_kbps</code></td></tr>
+<tr><td><code>stream.stopped</code></td><td><span data-l="pt">A transmissão terminou.</span><span data-l="en">The stream ended.</span></td><td><code>duration_s</code></td></tr>
+<tr><td><code>stream.reconnecting</code></td><td><span data-l="pt">Um destino parou de enviar depois de ter enviado.</span><span data-l="en">A destination stopped sending after having sent.</span></td><td><code>stalled_destinations</code>, <code>attempt</code></td></tr>
+<tr><td><code>recording.started</code></td><td><span data-l="pt">A gravação começou.</span><span data-l="en">Recording started.</span></td><td><code>file</code>, <code>format</code></td></tr>
+<tr><td><code>recording.stopped</code></td><td><span data-l="pt">A gravação terminou.</span><span data-l="en">Recording ended.</span></td><td><code>file</code>, <code>duration_s</code>, <code>size_mb</code></td></tr>
+<tr><td><code>input.program</code></td><td><span data-l="pt">Um input foi para o program.</span><span data-l="en">An input went to program.</span></td><td><code>input</code>, <code>previous</code>, <code>transition</code>, <code>duration_ms</code></td></tr>
+<tr><td><code>input.preview</code></td><td><span data-l="pt">Um input foi para o preview.</span><span data-l="en">An input went to preview.</span></td><td><code>input</code></td></tr>
+<tr><td><code>overlay.on</code> / <code>overlay.off</code></td><td><span data-l="pt">Um overlay (1 a 4) entrou ou saiu.</span><span data-l="en">An overlay (1 to 4) came on or went off.</span></td><td><code>overlay</code>, <code>input</code></td></tr>
+<tr><td><code>preset.loaded</code></td><td><span data-l="pt">Um preset foi aberto.</span><span data-l="en">A preset was opened.</span></td><td><code>preset</code>, <code>path</code>, <code>inputs</code></td></tr>
+<tr><td><code>app.started</code></td><td><span data-l="pt">O Airo terminou de abrir.</span><span data-l="en">Airo finished opening.</span></td><td><code>version</code>, <code>machine</code></td></tr>
+</tbody></table></div>
+<h3 id="conferir-a-assinatura"><span data-l="pt">Conferir a assinatura</span><span data-l="en">Checking the signature</span></h3>
+<p data-l="pt"><code>X-Airo-Signature</code> é <code>sha256=</code> seguido do HMAC-SHA256, em hexadecimal minúsculo, do corpo exato recebido, usando o segredo (<code>whsec_…</code>) mostrado no cadastro. Compare em tempo constante e recuse se não bater.</p><p data-l="en"><code>X-Airo-Signature</code> is <code>sha256=</code> followed by the lowercase hex HMAC-SHA256 of the exact body received, using the secret (<code>whsec_…</code>) shown when you register the webhook. Compare in constant time and reject on mismatch.</p>
+<div class="doc-code"><div class="cap">server.py</div><pre tabindex="0">import hashlib, hmac, os
+from flask import Flask, abort, request
+
+SECRET = os.environ["AIRO_WEBHOOK_SECRET"].encode()  # whsec_…
+app = Flask(__name__)
+
+@app.post("/hooks/airo")
+def airo():
+    body = request.get_data()
+    expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
+    received = request.headers.get("X-Airo-Signature", "").encode("latin-1", "replace")
+    if not hmac.compare_digest(expected.encode(), received):
+        abort(401)
+    delivery = request.get_json()
+    print(delivery["event"], delivery["data"])
+    return "", 204</pre></div>
+<h3 id="entrega-e-tentativas"><span data-l="pt">Entrega e tentativas</span><span data-l="en">Delivery and retries</span></h3>
+<ul>
+<li data-l="pt"><b>Sucesso</b> é qualquer resposta 2xx. Outra resposta, falta de conexão ou tempo esgotado conta como falha.</li><li data-l="en"><b>Success</b> is any 2xx response. Any other response, a failed connection or a timeout counts as a failure.</li>
+<li data-l="pt"><b>Tempo limite</b> por envio: 2, 5 (padrão) ou 10 segundos.</li><li data-l="en"><b>Timeout</b> per attempt: 2, 5 (default) or 10 seconds.</li>
+<li data-l="pt"><b>Tentativas:</b> 1, 3 (padrão) ou 5, com intervalo crescente (10 s, 30 s, 90 s) ou fixo (10 s).</li><li data-l="en"><b>Attempts:</b> 1, 3 (default) or 5, with growing (10 s, 30 s, 90 s) or fixed (10 s) intervals.</li>
+<li data-l="pt"><b>Pausa automática:</b> depois de 3 entregas seguidas que falharam em todas as tentativas, o webhook pausa sozinho.</li><li data-l="en"><b>Automatic pause:</b> after 3 deliveries in a row fail every attempt, the webhook pauses itself.</li>
+<li data-l="pt"><b>Redirecionamento</b> não é seguido: um 3xx conta como falha.</li><li data-l="en"><b>Redirects</b> are not followed: a 3xx counts as a failure.</li>
+<li data-l="pt"><b>Histórico:</b> as últimas 50 entregas de cada webhook ficam guardadas por 7 dias, com reenvio.</li><li data-l="en"><b>History:</b> the last 50 deliveries of each webhook are kept for 7 days and can be resent.</li>
+<li data-l="pt">Enviar nunca trava o vídeo: tudo é assíncrono.</li><li data-l="en">Sending never blocks the video: everything is asynchronous.</li>
+</ul>
+<p class="doc-next"><a href="#comecando"><span data-l="pt">Voltar para Começando ↑</span><span data-l="en">Back to Getting started ↑</span></a></p>
+    </article>
+    </main>
+
+    <aside class="docs-toc" aria-labelledby="toc-title">
+      <p class="toc-title" id="toc-title"><span data-l="pt">Nesta página</span><span data-l="en">On this page</span></p>
+      <div id="toc"></div>
+    </aside>
+  </div>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>Airo</a>
+        <p><span data-l="pt">Switcher de vídeo ao vivo para igrejas. Preview e program, letras, slides e transmissão numa tela só.</span><span data-l="en">Live video switcher for churches. Preview and program, lyrics, slides and streaming on one screen.</span></p>
+      </div>
+      <nav aria-label="Produto">
+        <h4><span data-l="pt">Produto</span><span data-l="en">Product</span></h4>
+        <a href="./#recursos"><span data-l="pt">Recursos</span><span data-l="en">Features</span></a>
+        <a href="./#demo"><span data-l="pt">Demonstração</span><span data-l="en">Demo</span></a>
+        <a href="./#telas"><span data-l="pt">Telas</span><span data-l="en">Screens</span></a>
+        <a href="./#remoto"><span data-l="pt">Airo Remoto</span><span data-l="en">Airo Remote</span></a>
+        <a href="./#precos"><span data-l="pt">Preços</span><span data-l="en">Pricing</span></a>
+      </nav>
+      <nav aria-label="Desenvolvedores">
+        <h4><span data-l="pt">Desenvolvedores</span><span data-l="en">Developers</span></h4>
+        <a href="#comecando"><span data-l="pt">Documentação da API</span><span data-l="en">API documentation</span></a>
+        <a href="#site-da-igreja"><span data-l="pt">Transmissão no site da igreja</span><span data-l="en">Live stream on your church website</span></a>
+        <a href="#webhooks"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></a>
+        <a href="https://github.com/airo-app/airo-app.github.io/releases"><span data-l="pt">Todas as versões</span><span data-l="en">All versions</span></a>
+      </nav>
+    </div>
+    <div class="foot-bottom"><span>© 2026 Airo</span><span>macOS · Windows · Linux</span></div>
+  </div>
+  <div class="wordmark" aria-hidden="true">airo<i></i></div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var LANG_KEY = "airo-site-lang";
+
+  /* Textos que não cabem em [data-l]: título da aba, descrição e rótulos de acessibilidade */
+  var strings = {
+    pt: { title: "Documentação · Airo", sections: "Seções", language: "Idioma", docs: "Documentação",
+          product: "Produto", developers: "Desenvolvedores", anchor: "Link para esta seção",
+          copy: "Copiar", copied: "Copiado", copyLabel: "Copiar o código",
+          desc: "Documentação da API do Airo: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja." },
+    en: { title: "Documentation · Airo", sections: "Sections", language: "Language", docs: "Documentation",
+          product: "Product", developers: "Developers", anchor: "Link to this section",
+          copy: "Copy", copied: "Copied", copyLabel: "Copy the code",
+          desc: "Airo API documentation: HTTP, WebSocket, tokens, webhooks and the guide to show the stream on your church website." }
+  };
+  function current() { return document.documentElement.lang === "en" ? "en" : "pt"; }
+  function s(key) { return strings[current()][key]; }
+
+  /* Navegação fica mais sólida depois do topo */
+  var nav = $("#nav");
+  function onScroll() { nav.classList.toggle("scrolled", window.scrollY > 24); }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* Cores no código: textos, comentários, palavras-chave e cabeçalhos HTTP */
+  function escapeHtml(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function highlight(src) {
+    var re = /("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|((?:^|[ \t])(?:\/\/|#)[^\n]*)|^([A-Z][\w-]*:)(?= )|\b(const|let|function|return|if|await|async|new|require|import|from|def|POST|curl)\b|(→|←)/gm;
+    var out = "";
+    var last = 0;
+    src.replace(re, function (m, str, com, hdr, kw, dir, at) {
+      out += escapeHtml(src.slice(last, at));
+      if (com) {
+        var lead = /^[ \t]*/.exec(m)[0];
+        out += escapeHtml(lead) + '<span class="tok-c">' + escapeHtml(m.slice(lead.length)) + "</span>";
+      } else {
+        out += '<span class="' + (str ? "tok-s" : hdr ? "tok-f" : "tok-k") + '">' + escapeHtml(m) + "</span>";
+      }
+      last = at + m.length;
+      return m;
+    });
+    return out + escapeHtml(src.slice(last));
+  }
+
+  /* Blocos de código: cores e botão de copiar */
+  $$(".doc-code").forEach(function (block) {
+    var pre = $("pre", block);
+    var cap = $(".cap", block);
+    var code = pre.textContent;
+    pre.innerHTML = highlight(code);
+    var name = document.createElement("span");
+    name.textContent = cap.textContent;
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "copy";
+    button.innerHTML = '<svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-text"></span>';
+    cap.textContent = "";
+    cap.appendChild(name);
+    cap.appendChild(button);
+    button.addEventListener("click", function () {
+      var done = function () {
+        button.classList.add("done");
+        $("use", button).setAttribute("href", "#i-check");
+        $(".copy-text", button).textContent = s("copied");
+        setTimeout(function () {
+          button.classList.remove("done");
+          $("use", button).setAttribute("href", "#i-copy");
+          $(".copy-text", button).textContent = s("copy");
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, function () {});
+    });
+  });
+
+  /* Âncora ao lado de cada seção e a lista "Nesta página" de cada artigo */
+  var toc = $("#toc");
+  var articles = $$(".art");
+  var headings = [];
+  articles.forEach(function (art) {
+    var list = document.createElement("nav");
+    list.className = "toc-list";
+    list.setAttribute("data-art", art.id);
+    $$("h3[id]", art).forEach(function (h) {
+      var anchor = document.createElement("a");
+      anchor.className = "h-anchor";
+      anchor.href = "#" + h.id;
+      anchor.textContent = "#";
+      h.appendChild(anchor);
+      var link = document.createElement("a");
+      link.href = "#" + h.id;
+      link.innerHTML = h.innerHTML;
+      $(".h-anchor", link).remove();
+      list.appendChild(link);
+      headings.push({ el: h, art: art.id, link: link });
+    });
+    toc.appendChild(list);
+  });
+
+  /* O que está na tela acende no menu e em "Nesta página" */
+  var sideLinks = $$("#docs-side a");
+  var lists = $$(".toc-list", toc);
+  var pending = false;
+  function spy() {
+    pending = false;
+    var line = 140;
+    var art = articles[0];
+    articles.forEach(function (a) { if (a.getBoundingClientRect().top <= line) art = a; });
+    var heading = null;
+    headings.forEach(function (h) { if (h.art === art.id && h.el.getBoundingClientRect().top <= line) heading = h; });
+    sideLinks.forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-art") === art.id); });
+    lists.forEach(function (l) { l.hidden = l.getAttribute("data-art") !== art.id; });
+    headings.forEach(function (h) { h.link.classList.toggle("active", h === heading); });
+  }
+  window.addEventListener("scroll", function () { if (!pending) { pending = true; requestAnimationFrame(spy); } }, { passive: true });
+  spy();
+
+  /* Troca de idioma */
+  function applyStrings() {
+    document.title = s("title");
+    $('meta[name="description"]').setAttribute("content", s("desc"));
+    $(".nav-links").setAttribute("aria-label", s("sections"));
+    $(".lang").setAttribute("aria-label", s("language"));
+    $("#docs-side").setAttribute("aria-label", s("docs"));
+    $('.foot nav[aria-label]').setAttribute("aria-label", s("product"));
+    $$(".foot nav[aria-label]")[1].setAttribute("aria-label", s("developers"));
+    $$(".h-anchor").forEach(function (a) { a.setAttribute("aria-label", s("anchor")); });
+    $$(".copy").forEach(function (b) {
+      b.setAttribute("aria-label", s("copyLabel"));
+      if (!b.classList.contains("done")) $(".copy-text", b).textContent = s("copy");
+    });
+    $$(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === current())); });
+  }
+  $$(".lang button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var lang = b.getAttribute("data-lang");
+      document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
+      try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* sem armazenamento: só não lembra */ }
+      applyStrings();
+    });
+  });
+  applyStrings();
+})();
+</script>
+</body>
+</html>
