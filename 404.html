@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Airo · página não encontrada</title>
+<title>4clip · página não encontrada</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#060709">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -15,13 +15,13 @@
 /* Mesmo idioma das outras páginas: escolha guardada ou idioma do navegador */
 (function () {
   var lang = null;
-  try { lang = localStorage.getItem("airo-site-lang"); } catch (e) { lang = null; }
+  try { lang = localStorage.getItem("fourclip-site-lang"); } catch (e) { lang = null; }
   if (lang !== "pt" && lang !== "en") {
     var preferred = (navigator.languages && navigator.languages[0]) || navigator.language || "";
     lang = /^pt\b/i.test(preferred) ? "pt" : "en";
   }
   document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
-  if (lang === "en") document.title = "Airo · page not found";
+  if (lang === "en") document.title = "4clip · page not found";
 })();
 </script>
 <!-- Caminhos absolutos: esta página aparece em qualquer endereço que não existe -->
