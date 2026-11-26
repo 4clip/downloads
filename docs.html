@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Documentação · Airo</title>
-<meta name="description" content="Documentação da API do Airo: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja.">
+<title>Documentação · 4clip</title>
+<meta name="description" content="Documentação da API do 4clip: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja.">
 <meta name="theme-color" content="#060709">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
@@ -17,7 +17,7 @@
    inicial) ou o idioma do navegador. Os dois idiomas estão no HTML em [data-l]. */
 (function () {
   var lang = (/[?&]lang=(pt|en)\b/.exec(location.search) || [])[1];
-  if (!lang) { try { lang = localStorage.getItem("airo-site-lang"); } catch (e) { lang = null; } }
+  if (!lang) { try { lang = localStorage.getItem("fourclip-site-lang"); } catch (e) { lang = null; } }
   if (lang !== "pt" && lang !== "en") {
     var preferred = (navigator.languages && navigator.languages[0]) || navigator.language || "";
     lang = /^pt\b/i.test(preferred) ? "pt" : "en";
@@ -151,7 +151,7 @@ html { scroll-padding-top: 104px; }
 
 <header class="nav" id="nav">
   <div class="nav-pill">
-    <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>Airo</a>
+    <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>4clip</a>
     <nav class="nav-links" aria-label="Seções">
       <a href="./#recursos"><span data-l="pt">Recursos</span><span data-l="en">Features</span></a>
       <a href="./#demo"><span data-l="pt">Demonstração</span><span data-l="en">Demo</span></a>
@@ -171,8 +171,8 @@ html { scroll-padding-top: 104px; }
 <div class="wrap docs">
   <header class="docs-hero">
     <span class="kicker"><span class="dot b"></span><span data-l="pt">Documentação</span><span data-l="en">Documentation</span></span>
-    <h1><span data-l="pt">Ligue o Airo <em>ao resto da igreja.</em></span><span data-l="en">Connect Airo <em>to the rest of your church.</em></span></h1>
-    <p class="lede"><span data-l="pt">Comande o Airo pela rede local com HTTP e WebSocket, e receba um aviso por webhook sempre que algo acontece no ao vivo.</span><span data-l="en">Control Airo over the local network with HTTP and WebSocket, and get a webhook whenever something happens on air.</span></p>
+    <h1><span data-l="pt">Ligue o 4clip <em>ao resto da igreja.</em></span><span data-l="en">Connect 4clip <em>to the rest of your church.</em></span></h1>
+    <p class="lede"><span data-l="pt">Comande o 4clip pela rede local com HTTP e WebSocket, e receba um aviso por webhook sempre que algo acontece no ao vivo.</span><span data-l="en">Control 4clip over the local network with HTTP and WebSocket, and get a webhook whenever something happens on air.</span></p>
     <div class="docs-cards">
       <a class="docs-card" href="#comecando">
         <small><span data-l="pt">Começando</span><span data-l="en">Getting started</span></small>
@@ -189,7 +189,7 @@ html { scroll-padding-top: 104px; }
       <a class="docs-card" href="#webhooks">
         <small><span data-l="pt">Referência</span><span data-l="en">Reference</span></small>
         <b><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></b>
-        <span class="d"><span data-l="pt">Os avisos que o Airo envia, a assinatura e as novas tentativas.</span><span data-l="en">The notifications Airo sends, the signature and the retries.</span></span>
+        <span class="d"><span data-l="pt">Os avisos que o 4clip envia, a assinatura e as novas tentativas.</span><span data-l="en">The notifications 4clip sends, the signature and the retries.</span></span>
         <svg class="go" aria-hidden="true"><use href="#i-arrow"/></svg>
       </a>
     </div>
@@ -211,21 +211,21 @@ html { scroll-padding-top: 104px; }
     <article class="art" id="comecando">
 <span class="kicker"><span class="dot"></span><span data-l="pt">Começando</span><span data-l="en">Getting started</span></span>
 <h2 class="art-title"><span data-l="pt">Começando com a API</span><span data-l="en">Getting started with the API</span></h2>
-<p class="doc-lede" data-l="pt">O Airo pode ser controlado pela rede local por apps, painéis, controladores e scripts. Esta página mostra como ligar a API, criar um token e fazer a primeira chamada.</p><p class="doc-lede" data-l="en">Airo can be controlled over the local network by apps, dashboards, controllers and scripts. This page shows how to turn the API on, create a token and make your first call.</p>
-<h3 id="dois-jeitos-de-falar-com-o-airo"><span data-l="pt">Dois jeitos de falar com o Airo</span><span data-l="en">Two ways to talk to Airo</span></h3>
+<p class="doc-lede" data-l="pt">O 4clip pode ser controlado pela rede local por apps, painéis, controladores e scripts. Esta página mostra como ligar a API, criar um token e fazer a primeira chamada.</p><p class="doc-lede" data-l="en">4clip can be controlled over the local network by apps, dashboards, controllers and scripts. This page shows how to turn the API on, create a token and make your first call.</p>
+<h3 id="dois-jeitos-de-falar-com-o-fourclip"><span data-l="pt">Dois jeitos de falar com o 4clip</span><span data-l="en">Two ways to talk to 4clip</span></h3>
 <div class="doc-table"><table><thead><tr><th><span data-l="pt"></span><span data-l="en"></span></th><th><span data-l="pt">WebSocket</span><span data-l="en">WebSocket</span></th><th><span data-l="pt">HTTP</span><span data-l="en">HTTP</span></th></tr></thead><tbody>
 <tr><td><span data-l="pt">Porta padrão</span><span data-l="en">Default port</span></td><td><code>4600</code></td><td><code>4601</code></td></tr>
 <tr><td><span data-l="pt">Para quê</span><span data-l="en">Best for</span></td><td><span data-l="pt">Controle em tempo real e eventos</span><span data-l="en">Real-time control and events</span></td><td><span data-l="pt">Comandos simples por URL</span><span data-l="en">Simple commands by URL</span></td></tr>
 <tr><td><span data-l="pt">Endereço</span><span data-l="en">Address</span></td><td><code>ws://IP:4600</code></td><td><code>http://IP:4601/api/v1</code></td></tr>
 </tbody></table></div>
-<p data-l="pt">Os dois usam os mesmos tokens e executam as mesmas funções. No próprio computador do Airo, use <code>localhost</code> no lugar do IP.</p><p data-l="en">Both use the same tokens and run the same functions. On the Airo computer itself, use <code>localhost</code> instead of the IP.</p>
+<p data-l="pt">Os dois usam os mesmos tokens e executam as mesmas funções. No próprio computador do 4clip, use <code>localhost</code> no lugar do IP.</p><p data-l="en">Both use the same tokens and run the same functions. On the 4clip computer itself, use <code>localhost</code> instead of the IP.</p>
 <h3 id="ligar-a-api"><span data-l="pt">Ligar a API</span><span data-l="en">Turn the API on</span></h3>
 <ol>
-<li data-l="pt">No Airo, abra <b>Configurações › API e WebSocket</b>.</li><li data-l="en">In Airo, open <b>Settings › API and WebSocket</b>.</li>
+<li data-l="pt">No 4clip, abra <b>Configurações › API e WebSocket</b>.</li><li data-l="en">In 4clip, open <b>Settings › API and WebSocket</b>.</li>
 <li data-l="pt">Ligue o <b>Servidor WebSocket</b>, a <b>API HTTP</b> ou os dois.</li><li data-l="en">Turn on the <b>WebSocket server</b>, the <b>HTTP API</b>, or both.</li>
 <li data-l="pt">Copie o <b>endereço</b> e o <b>token de acesso</b>.</li><li data-l="en">Copy the <b>address</b> and the <b>access token</b>.</li>
 </ol>
-<div class="doc-note" data-l="pt"><b>Rede local.</b> O aparelho precisa estar na mesma rede do computador do Airo. A API não usa TLS, então use só na rede da igreja.</div><div class="doc-note" data-l="en"><b>Local network.</b> The device must be on the same network as the Airo computer. The API does not use TLS, so keep it on the church network.</div>
+<div class="doc-note" data-l="pt"><b>Rede local.</b> O aparelho precisa estar na mesma rede do computador do 4clip. A API não usa TLS, então use só na rede da igreja.</div><div class="doc-note" data-l="en"><b>Local network.</b> The device must be on the same network as the 4clip computer. The API does not use TLS, so keep it on the church network.</div>
 <h3 id="tokens-e-permissoes"><span data-l="pt">Tokens e permissões</span><span data-l="en">Tokens and permissions</span></h3>
 <p data-l="pt">O token principal pode tudo. Para cada aparelho ou programa, crie um token extra só com o que ele precisa, em <b>Permissões por token › + Novo token</b>. O token extra aparece inteiro uma única vez: copie na hora.</p><p data-l="en">The main token can do everything. For each device or program, create an extra token with only what it needs, under <b>Token permissions › + New token</b>. An extra token is shown in full only once, so copy it right away.</p>
 <div class="doc-table"><table><thead><tr><th><span data-l="pt">Permissão</span><span data-l="en">Permission</span></th><th><span data-l="pt">Na tela</span><span data-l="en">On screen</span></th><th><span data-l="pt">Libera</span><span data-l="en">Allows</span></th></tr></thead><tbody>
@@ -278,9 +278,9 @@ curl -X POST -H "Authorization: Bearer stk_..." \
 <tr><td><code>403</code></td><td><code>{"ok": false, "code": "forbidden"}</code></td><td><span data-l="pt">O token não tem a permissão da função.</span><span data-l="en">The token lacks the permission for that function.</span></td></tr>
 </tbody></table></div>
 <h3 id="websocket-em-cinco-mensagens"><span data-l="pt">WebSocket em cinco mensagens</span><span data-l="en">WebSocket in five messages</span></h3>
-<p data-l="pt">A primeira mensagem precisa ser um <code>hello</code> com o token, em até 5 segundos. Depois disso, o Airo aceita funções e empurra eventos sempre que algo muda.</p><p data-l="en">The first message must be a <code>hello</code> carrying the token, within 5 seconds. After that, Airo accepts functions and pushes events whenever something changes.</p>
+<p data-l="pt">A primeira mensagem precisa ser um <code>hello</code> com o token, em até 5 segundos. Depois disso, o 4clip aceita funções e empurra eventos sempre que algo muda.</p><p data-l="en">The first message must be a <code>hello</code> carrying the token, within 5 seconds. After that, 4clip accepts functions and pushes events whenever something changes.</p>
 <div class="doc-code"><div class="cap">ws://192.168.0.10:4600</div><pre tabindex="0">→ {"type": "hello", "token": "stk_...", "client": "Meu painel"}
-← {"type": "hello", "ok": true, "server": "Airo", "protocol": 1, "permissions": ["read", "broadcast"]}
+← {"type": "hello", "ok": true, "server": "4clip", "protocol": 1, "permissions": ["read", "broadcast"]}
 
 → {"type": "function", "id": "1", "name": "StartStreaming"}
 ← {"type": "result", "id": "1", "ok": true}
@@ -290,11 +290,11 @@ curl -X POST -H "Authorization: Bearer stk_..." \
     <article class="art" id="site-da-igreja">
 <span class="kicker"><span class="dot"></span><span data-l="pt">Guia</span><span data-l="en">Guide</span></span>
 <h2 class="art-title"><span data-l="pt">Transmissão ao vivo no site da igreja</span><span data-l="en">Live stream on your church website</span></h2>
-<p class="doc-lede" data-l="pt">Neste guia, o painel da igreja abre o Airo, inicia a transmissão e recebe o endereço do vídeo para colocar o player no site. Ninguém precisa copiar e colar link.</p><p class="doc-lede" data-l="en">In this guide, the church dashboard opens Airo, starts the stream and receives the video address to put the player on the website. Nobody has to copy and paste a link.</p>
+<p class="doc-lede" data-l="pt">Neste guia, o painel da igreja abre o 4clip, inicia a transmissão e recebe o endereço do vídeo para colocar o player no site. Ninguém precisa copiar e colar link.</p><p class="doc-lede" data-l="en">In this guide, the church dashboard opens 4clip, starts the stream and receives the video address to put the player on the website. Nobody has to copy and paste a link.</p>
 <div class="doc-flow">
 <div class="node"><b><span data-l="pt">Painel da igreja</span><span data-l="en">Church dashboard</span></b><small><span data-l="pt">botão Entrar ao vivo</span><span data-l="en">Go live button</span></small></div>
 <span class="arrow" aria-hidden="true">→</span>
-<div class="node"><b><span data-l="pt">Airo</span><span data-l="en">Airo</span></b><small><span data-l="pt">abre o preset e transmite</span><span data-l="en">opens the preset and streams</span></small></div>
+<div class="node"><b><span data-l="pt">4clip</span><span data-l="en">4clip</span></b><small><span data-l="pt">abre o preset e transmite</span><span data-l="en">opens the preset and streams</span></small></div>
 <span class="arrow" aria-hidden="true">→</span>
 <div class="node"><b><span data-l="pt">YouTube</span><span data-l="en">YouTube</span></b><small><span data-l="pt">recebe o vídeo</span><span data-l="en">receives the video</span></small></div>
 <span class="arrow" aria-hidden="true">→</span>
@@ -304,27 +304,27 @@ curl -X POST -H "Authorization: Bearer stk_..." \
 </div>
 <h3 id="o-que-voce-precisa"><span data-l="pt">O que você precisa</span><span data-l="en">What you need</span></h3>
 <ul>
-<li data-l="pt">O Airo instalado no computador da transmissão, com um destino pronto em <b>Configurações › Transmissão</b> (por exemplo, o YouTube).</li><li data-l="en">Airo installed on the streaming computer, with a destination ready under <b>Settings › Streaming</b> (YouTube, for example).</li>
+<li data-l="pt">O 4clip instalado no computador da transmissão, com um destino pronto em <b>Configurações › Transmissão</b> (por exemplo, o YouTube).</li><li data-l="en">4clip installed on the streaming computer, with a destination ready under <b>Settings › Streaming</b> (YouTube, for example).</li>
 <li data-l="pt">O painel da igreja aberto no navegador desse mesmo computador.</li><li data-l="en">The church dashboard open in a browser on that same computer.</li>
 <li data-l="pt">Um endereço <code>https</code> no servidor do painel para receber o webhook.</li><li data-l="en">An <code>https</code> address on the dashboard server to receive the webhook.</li>
 </ul>
-<h3 class="step" id="passo-1-prepare-o-airo-uma-vez"><span class="num">1</span><span data-l="pt">Prepare o Airo (uma vez)</span><span data-l="en">Set Airo up (once)</span></h3>
+<h3 class="step" id="passo-1-prepare-o-fourclip-uma-vez"><span class="num">1</span><span data-l="pt">Prepare o 4clip (uma vez)</span><span data-l="en">Set 4clip up (once)</span></h3>
 <ol>
 <li data-l="pt">Em <b>Configurações › API e WebSocket</b>, ligue o <b>Servidor WebSocket</b>.</li><li data-l="en">Under <b>Settings › API and WebSocket</b>, turn on the <b>WebSocket server</b>.</li>
 <li data-l="pt">Em <b>Permissões por token</b>, crie o token “Painel da igreja” com <b>Leitura</b> e <b>Transmissão</b>. Copie o token: ele aparece inteiro uma única vez.</li><li data-l="en">Under <b>Token permissions</b>, create a token named “Church dashboard” with <b>Read</b> and <b>Broadcast</b>. Copy it: it is shown in full only once.</li>
-<li data-l="pt">Em <b>Configurações › Webhooks</b>, crie um webhook para <code>https://painel.suaigreja.org/hooks/airo</code> com os eventos <code>stream.started</code> e <code>stream.stopped</code>. Copie o segredo de assinatura (<code>whsec_…</code>).</li><li data-l="en">Under <b>Settings › Webhooks</b>, create a webhook to <code>https://painel.suaigreja.org/hooks/airo</code> with the <code>stream.started</code> and <code>stream.stopped</code> events. Copy the signing secret (<code>whsec_…</code>).</li>
+<li data-l="pt">Em <b>Configurações › Webhooks</b>, crie um webhook para <code>https://painel.suaigreja.org/hooks/fourclip</code> com os eventos <code>stream.started</code> e <code>stream.stopped</code>. Copie o segredo de assinatura (<code>whsec_…</code>).</li><li data-l="en">Under <b>Settings › Webhooks</b>, create a webhook to <code>https://painel.suaigreja.org/hooks/fourclip</code> with the <code>stream.started</code> and <code>stream.stopped</code> events. Copy the signing secret (<code>whsec_…</code>).</li>
 </ol>
-<h3 class="step" id="passo-2-abra-o-airo-pelo-painel"><span class="num">2</span><span data-l="pt">Abra o Airo pelo painel</span><span data-l="en">Open Airo from the dashboard</span></h3>
-<p data-l="pt">O botão do painel é um link <code>airo://</code>. O navegador pede confirmação na primeira vez e o Airo abre com o preset do evento carregado.</p><p data-l="en">The dashboard button is a <code>airo://</code> link. The browser asks for confirmation the first time, and Airo opens with the event preset loaded.</p>
-<div class="doc-code"><div class="cap">html</div><pre tabindex="0">&lt;a href="airo://open?preset=Evento%20de%20domingo"&gt;Entrar ao vivo&lt;/a&gt;</pre></div>
+<h3 class="step" id="passo-2-abra-o-fourclip-pelo-painel"><span class="num">2</span><span data-l="pt">Abra o 4clip pelo painel</span><span data-l="en">Open 4clip from the dashboard</span></h3>
+<p data-l="pt">O botão do painel é um link <code>fourclip://</code>. O navegador pede confirmação na primeira vez e o 4clip abre com o preset do evento carregado.</p><p data-l="en">The dashboard button is a <code>fourclip://</code> link. The browser asks for confirmation the first time, and 4clip opens with the event preset loaded.</p>
+<div class="doc-code"><div class="cap">html</div><pre tabindex="0">&lt;a href="fourclip://open?preset=Evento%20de%20domingo"&gt;Entrar ao vivo&lt;/a&gt;</pre></div>
 <h3 class="step" id="passo-3-conecte-e-inicie-a-transmissao"><span class="num">3</span><span data-l="pt">Conecte e inicie a transmissão</span><span data-l="en">Connect and start the stream</span></h3>
-<p data-l="pt">Com o Airo aberto, o painel fala com ele por WebSocket em <code>localhost</code>. A conexão só abre quando o Airo já está de pé, então tentar de novo até conectar também serve para esperar o Airo abrir.</p><p data-l="en">With Airo open, the dashboard talks to it over WebSocket on <code>localhost</code>. The connection only opens once Airo is up, so retrying until it connects doubles as waiting for Airo to open.</p>
-<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">const AIRO = "ws://localhost:4600";
+<p data-l="pt">Com o 4clip aberto, o painel fala com ele por WebSocket em <code>localhost</code>. A conexão só abre quando o 4clip já está de pé, então tentar de novo até conectar também serve para esperar o 4clip abrir.</p><p data-l="en">With 4clip open, the dashboard talks to it over WebSocket on <code>localhost</code>. The connection only opens once 4clip is up, so retrying until it connects doubles as waiting for 4clip to open.</p>
+<div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">const FOURCLIP = "ws://localhost:4600";
 
-function connectAiro(token, onEvent) {
+function connectFourclip(token, onEvent) {
   return new Promise((resolve) =&gt; {
     const tryConnect = () =&gt; {
-      const ws = new WebSocket(AIRO);
+      const ws = new WebSocket(FOURCLIP);
       ws.onopen = () =&gt;
         ws.send(JSON.stringify({ type: "hello", token, client: "Painel da igreja" }));
       ws.onmessage = (e) =&gt; {
@@ -338,27 +338,27 @@ function connectAiro(token, onEvent) {
   });
 }
 
-const ws = await connectAiro(AIRO_TOKEN, (event, data) =&gt; {
+const ws = await connectFourclip(FOURCLIP_TOKEN, (event, data) =&gt; {
   if (event === "streaming") showLiveBadge(data.active);
 });
 
 startButton.onclick = () =&gt;
   ws.send(JSON.stringify({ type: "function", id: "start", name: "StartStreaming" }));</pre></div>
-<p data-l="pt">O Airo responde <code>{"type": "result", "id": "start", "ok": true}</code>. Quando o destino confirma a conexão, chega o evento <code>streaming</code> com <code>active: true</code>. Se nenhum destino estiver pronto (sem chave, por exemplo), o <code>result</code> vem com <code>ok: false</code> e o motivo em <code>error</code>.</p><p data-l="en">Airo answers <code>{"type": "result", "id": "start", "ok": true}</code>. When the destination confirms the connection, the <code>streaming</code> event arrives with <code>active: true</code>. If no destination is ready (no stream key, for example), the <code>result</code> comes with <code>ok: false</code> and the reason in <code>error</code>.</p>
+<p data-l="pt">O 4clip responde <code>{"type": "result", "id": "start", "ok": true}</code>. Quando o destino confirma a conexão, chega o evento <code>streaming</code> com <code>active: true</code>. Se nenhum destino estiver pronto (sem chave, por exemplo), o <code>result</code> vem com <code>ok: false</code> e o motivo em <code>error</code>.</p><p data-l="en">4clip answers <code>{"type": "result", "id": "start", "ok": true}</code>. When the destination confirms the connection, the <code>streaming</code> event arrives with <code>active: true</code>. If no destination is ready (no stream key, for example), the <code>result</code> comes with <code>ok: false</code> and the reason in <code>error</code>.</p>
 <h3 class="step" id="passo-4-receba-o-endereco-da-transmissao"><span class="num">4</span><span data-l="pt">Receba o endereço da transmissão</span><span data-l="en">Receive the stream address</span></h3>
-<p data-l="pt">Quando a transmissão começa de fato, o Airo envia <code>stream.started</code> para o servidor do painel. O campo <code>watch_url</code> traz o endereço público do vídeo.</p><p data-l="en">When the stream is actually live, Airo sends <code>stream.started</code> to the dashboard server. The <code>watch_url</code> field carries the public address of the video.</p>
-<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+<p data-l="pt">Quando a transmissão começa de fato, o 4clip envia <code>stream.started</code> para o servidor do painel. O campo <code>watch_url</code> traz o endereço público do vídeo.</p><p data-l="en">When the stream is actually live, 4clip sends <code>stream.started</code> to the dashboard server. The <code>watch_url</code> field carries the public address of the video.</p>
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/fourclip
 Content-Type: application/json
-X-Airo-Event: stream.started
-X-Airo-Delivery: dlv_9f31a2c4e7b0
-X-Airo-Signature: sha256=3f6c…
+X-4clip-Event: stream.started
+X-4clip-Delivery: dlv_9f31a2c4e7b0
+X-4clip-Signature: sha256=3f6c…
 
 {
   "id": "dlv_9f31a2c4e7b0",
   "event": "stream.started",
   "timestamp": "2026-11-15T10:00:03-03:00",
   "project": "Evento de domingo",
-  "airo_version": "1.4.2",
+  "fourclip_version": "1.4.2",
   "data": {
     "destinations": ["YouTube"],
     "watch_url": "https://www.youtube.com/watch?v=VIDEO_ID",
@@ -371,13 +371,13 @@ X-Airo-Signature: sha256=3f6c…
 <div class="doc-code"><div class="cap">server.js</div><pre tabindex="0">const crypto = require("crypto");
 const express = require("express");
 
-const SECRET = process.env.AIRO_WEBHOOK_SECRET; // whsec_…
+const SECRET = process.env.FOURCLIP_WEBHOOK_SECRET; // whsec_…
 const app = express();
 
-app.post("/hooks/airo", express.raw({ type: "application/json" }), async (req, res) =&gt; {
+app.post("/hooks/fourclip", express.raw({ type: "application/json" }), async (req, res) =&gt; {
   const expected = Buffer.from(
     "sha256=" + crypto.createHmac("sha256", SECRET).update(req.body).digest("hex"));
-  const received = Buffer.from(req.get("X-Airo-Signature") || "");
+  const received = Buffer.from(req.get("X-4clip-Signature") || "");
   const valid = received.length === expected.length &amp;&amp; crypto.timingSafeEqual(received, expected);
   if (!valid) return res.status(401).end();
 
@@ -388,7 +388,7 @@ app.post("/hooks/airo", express.raw({ type: "application/json" }), async (req, r
   if (event === "stream.stopped") await saveLive({ live: false, watchUrl: null });
   res.status(204).end();
 });</pre></div>
-<div class="doc-note" data-l="pt"><b>Entregas repetidas.</b> O Airo pode reenviar uma entrega com o mesmo <code>id</code>. Guarde os ids já processados e responda 2xx para os repetidos.</div><div class="doc-note" data-l="en"><b>Repeated deliveries.</b> Airo may resend a delivery with the same <code>id</code>. Keep the ids you have processed and answer 2xx to repeats.</div>
+<div class="doc-note" data-l="pt"><b>Entregas repetidas.</b> O 4clip pode reenviar uma entrega com o mesmo <code>id</code>. Guarde os ids já processados e responda 2xx para os repetidos.</div><div class="doc-note" data-l="en"><b>Repeated deliveries.</b> 4clip may resend a delivery with the same <code>id</code>. Keep the ids you have processed and answer 2xx to repeats.</div>
 <h3 class="step" id="passo-5-mostre-no-site"><span class="num">5</span><span data-l="pt">Mostre no site</span><span data-l="en">Show it on the website</span></h3>
 <p data-l="pt">O site pergunta ao seu servidor se há transmissão e monta o player com o endereço recebido:</p><p data-l="en">The website asks your server whether a stream is on and builds the player from the address it received:</p>
 <div class="doc-code"><div class="cap">site.js</div><pre tabindex="0">const { live, watchUrl } = await fetch("/api/live").then((r) =&gt; r.json());
@@ -398,36 +398,36 @@ if (live) {
   player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
 }
 player.hidden = !live;</pre></div>
-<div class="doc-note" data-l="pt"><b>Destino sem endereço.</b> Num servidor RTMP próprio, o Airo não tem como saber onde o vídeo aparece e <code>watch_url</code> vem <code>null</code>. Use então um endereço fixo do canal, como <code>https://www.youtube.com/embed/live_stream?channel=ID_DO_CANAL</code>.</div><div class="doc-note" data-l="en"><b>Destination without an address.</b> With a custom RTMP server, Airo cannot know where the video shows up and <code>watch_url</code> is <code>null</code>. Use a fixed channel address instead, such as <code>https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID</code>.</div>
+<div class="doc-note" data-l="pt"><b>Destino sem endereço.</b> Num servidor RTMP próprio, o 4clip não tem como saber onde o vídeo aparece e <code>watch_url</code> vem <code>null</code>. Use então um endereço fixo do canal, como <code>https://www.youtube.com/embed/live_stream?channel=ID_DO_CANAL</code>.</div><div class="doc-note" data-l="en"><b>Destination without an address.</b> With a custom RTMP server, 4clip cannot know where the video shows up and <code>watch_url</code> is <code>null</code>. Use a fixed channel address instead, such as <code>https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID</code>.</div>
 <h3 class="step" id="passo-6-encerre-a-transmissao"><span class="num">6</span><span data-l="pt">Encerre a transmissão</span><span data-l="en">End the stream</span></h3>
 <div class="doc-code"><div class="cap">painel.js</div><pre tabindex="0">ws.send(JSON.stringify({ type: "function", id: "stop", name: "StopStreaming" }));</pre></div>
-<p data-l="pt"><code>StopStreaming</code> para na hora, sem pedir confirmação ao operador, então peça a confirmação no painel. O Airo envia <code>stream.stopped</code> e o seu servidor tira o player do site.</p><p data-l="en"><code>StopStreaming</code> stops immediately, without asking the operator, so ask for confirmation in the dashboard. Airo sends <code>stream.stopped</code> and your server takes the player off the website.</p>
+<p data-l="pt"><code>StopStreaming</code> para na hora, sem pedir confirmação ao operador, então peça a confirmação no painel. O 4clip envia <code>stream.stopped</code> e o seu servidor tira o player do site.</p><p data-l="en"><code>StopStreaming</code> stops immediately, without asking the operator, so ask for confirmation in the dashboard. 4clip sends <code>stream.stopped</code> and your server takes the player off the website.</p>
 <h3 id="cuidados"><span data-l="pt">Cuidados</span><span data-l="en">Things to watch</span></h3>
 <ul>
 <li data-l="pt">O token fica no navegador do painel. Use um token extra só com Leitura e Transmissão, nunca o principal.</li><li data-l="en">The token lives in the dashboard's browser. Use an extra token with only Read and Broadcast, never the main one.</li>
 <li data-l="pt">A conexão é <code>ws://</code>, sem TLS: funciona em <code>localhost</code> e na rede local, não pela internet.</li><li data-l="en">The connection is <code>ws://</code>, without TLS: it works on <code>localhost</code> and the local network, not over the internet.</li>
-<li data-l="pt">A partir de uma página <code>https</code>, os navegadores aceitam <code>ws://localhost</code>, mas bloqueiam <code>ws://</code> para um IP da rede. Por isso o painel abre no mesmo computador do Airo. Em outro computador, deixe o operador iniciar pelo Airo e use só os webhooks.</li><li data-l="en">From an <code>https</code> page, browsers accept <code>ws://localhost</code> but block <code>ws://</code> to a network IP. That is why the dashboard opens on the Airo computer. On another computer, let the operator start from Airo and rely on the webhooks alone.</li>
+<li data-l="pt">A partir de uma página <code>https</code>, os navegadores aceitam <code>ws://localhost</code>, mas bloqueiam <code>ws://</code> para um IP da rede. Por isso o painel abre no mesmo computador do 4clip. Em outro computador, deixe o operador iniciar pelo 4clip e use só os webhooks.</li><li data-l="en">From an <code>https</code> page, browsers accept <code>ws://localhost</code> but block <code>ws://</code> to a network IP. That is why the dashboard opens on the 4clip computer. On another computer, let the operator start from 4clip and rely on the webhooks alone.</li>
 </ul>
 <p class="doc-next"><a href="#webhooks"><span data-l="pt">Referência: webhooks e eventos →</span><span data-l="en">Reference: webhooks and events →</span></a></p>
     </article>
     <article class="art" id="webhooks">
 <span class="kicker"><span class="dot"></span><span data-l="pt">Referência</span><span data-l="en">Reference</span></span>
 <h2 class="art-title"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></h2>
-<p class="doc-lede" data-l="pt">O Airo avisa outros sistemas quando algo acontece, enviando um pedido HTTP com JSON para o endereço cadastrado em Configurações › Webhooks.</p><p class="doc-lede" data-l="en">Airo notifies other systems when something happens by sending an HTTP request with JSON to the address registered under Settings › Webhooks.</p>
+<p class="doc-lede" data-l="pt">O 4clip avisa outros sistemas quando algo acontece, enviando um pedido HTTP com JSON para o endereço cadastrado em Configurações › Webhooks.</p><p class="doc-lede" data-l="en">4clip notifies other systems when something happens by sending an HTTP request with JSON to the address registered under Settings › Webhooks.</p>
 <h3 id="o-pedido"><span data-l="pt">O pedido</span><span data-l="en">The request</span></h3>
-<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/airo
+<div class="doc-code"><div class="cap">http</div><pre tabindex="0">POST https://painel.suaigreja.org/hooks/fourclip
 Content-Type: application/json
-User-Agent: Airo/1.4.2
-X-Airo-Event: input.program
-X-Airo-Delivery: dlv_9f31a2c4e7b0
-X-Airo-Signature: sha256=3f6c…
+User-Agent: 4clip/1.4.2
+X-4clip-Event: input.program
+X-4clip-Delivery: dlv_9f31a2c4e7b0
+X-4clip-Signature: sha256=3f6c…
 
 {
   "id": "dlv_9f31a2c4e7b0",
   "event": "input.program",
   "timestamp": "2026-11-15T10:42:18-03:00",
   "project": "Evento de domingo",
-  "airo_version": "1.4.2",
+  "fourclip_version": "1.4.2",
   "data": {
     "input": { "id": 4, "number": 1, "name": "Câmera Púlpito", "type": "camera" },
     "previous": { "id": 7, "number": 2, "name": "Câmera Geral", "type": "camera" },
@@ -436,7 +436,7 @@ X-Airo-Signature: sha256=3f6c…
   }
 }</pre></div>
 <div class="doc-table"><table><thead><tr><th><span data-l="pt">Campo</span><span data-l="en">Field</span></th><th><span data-l="pt">O que é</span><span data-l="en">What it is</span></th></tr></thead><tbody>
-<tr><td><code>id</code></td><td><span data-l="pt">Identificador da entrega, o mesmo de <code>X-Airo-Delivery</code>. Use para ignorar repetidas.</span><span data-l="en">Delivery identifier, the same as <code>X-Airo-Delivery</code>. Use it to ignore repeats.</span></td></tr>
+<tr><td><code>id</code></td><td><span data-l="pt">Identificador da entrega, o mesmo de <code>X-4clip-Delivery</code>. Use para ignorar repetidas.</span><span data-l="en">Delivery identifier, the same as <code>X-4clip-Delivery</code>. Use it to ignore repeats.</span></td></tr>
 <tr><td><code>event</code></td><td><span data-l="pt">Nome técnico do evento.</span><span data-l="en">Technical name of the event.</span></td></tr>
 <tr><td><code>timestamp</code></td><td><span data-l="pt">Quando aconteceu, em ISO 8601 com o fuso do computador.</span><span data-l="en">When it happened, ISO 8601 with the computer's time zone.</span></td></tr>
 <tr><td><code>project</code></td><td><span data-l="pt">Nome do preset aberto.</span><span data-l="en">Name of the open preset.</span></td></tr>
@@ -453,21 +453,21 @@ X-Airo-Signature: sha256=3f6c…
 <tr><td><code>input.preview</code></td><td><span data-l="pt">Um input foi para o preview.</span><span data-l="en">An input went to preview.</span></td><td><code>input</code></td></tr>
 <tr><td><code>overlay.on</code> / <code>overlay.off</code></td><td><span data-l="pt">Um overlay (1 a 4) entrou ou saiu.</span><span data-l="en">An overlay (1 to 4) came on or went off.</span></td><td><code>overlay</code>, <code>input</code></td></tr>
 <tr><td><code>preset.loaded</code></td><td><span data-l="pt">Um preset foi aberto.</span><span data-l="en">A preset was opened.</span></td><td><code>preset</code>, <code>path</code>, <code>inputs</code></td></tr>
-<tr><td><code>app.started</code></td><td><span data-l="pt">O Airo terminou de abrir.</span><span data-l="en">Airo finished opening.</span></td><td><code>version</code>, <code>machine</code></td></tr>
+<tr><td><code>app.started</code></td><td><span data-l="pt">O 4clip terminou de abrir.</span><span data-l="en">4clip finished opening.</span></td><td><code>version</code>, <code>machine</code></td></tr>
 </tbody></table></div>
 <h3 id="conferir-a-assinatura"><span data-l="pt">Conferir a assinatura</span><span data-l="en">Checking the signature</span></h3>
-<p data-l="pt"><code>X-Airo-Signature</code> é <code>sha256=</code> seguido do HMAC-SHA256, em hexadecimal minúsculo, do corpo exato recebido, usando o segredo (<code>whsec_…</code>) mostrado no cadastro. Compare em tempo constante e recuse se não bater.</p><p data-l="en"><code>X-Airo-Signature</code> is <code>sha256=</code> followed by the lowercase hex HMAC-SHA256 of the exact body received, using the secret (<code>whsec_…</code>) shown when you register the webhook. Compare in constant time and reject on mismatch.</p>
+<p data-l="pt"><code>X-4clip-Signature</code> é <code>sha256=</code> seguido do HMAC-SHA256, em hexadecimal minúsculo, do corpo exato recebido, usando o segredo (<code>whsec_…</code>) mostrado no cadastro. Compare em tempo constante e recuse se não bater.</p><p data-l="en"><code>X-4clip-Signature</code> is <code>sha256=</code> followed by the lowercase hex HMAC-SHA256 of the exact body received, using the secret (<code>whsec_…</code>) shown when you register the webhook. Compare in constant time and reject on mismatch.</p>
 <div class="doc-code"><div class="cap">server.py</div><pre tabindex="0">import hashlib, hmac, os
 from flask import Flask, abort, request
 
-SECRET = os.environ["AIRO_WEBHOOK_SECRET"].encode()  # whsec_…
+SECRET = os.environ["FOURCLIP_WEBHOOK_SECRET"].encode()  # whsec_…
 app = Flask(__name__)
 
-@app.post("/hooks/airo")
-def airo():
+@app.post("/hooks/fourclip")
+def fourclip():
     body = request.get_data()
     expected = "sha256=" + hmac.new(SECRET, body, hashlib.sha256).hexdigest()
-    received = request.headers.get("X-Airo-Signature", "").encode("latin-1", "replace")
+    received = request.headers.get("X-4clip-Signature", "").encode("latin-1", "replace")
     if not hmac.compare_digest(expected.encode(), received):
         abort(401)
     delivery = request.get_json()
@@ -498,7 +498,7 @@ def airo():
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>Airo</a>
+        <a class="brand" href="./"><svg viewBox="0 0 85 64" aria-hidden="true"><use href="#mark"/></svg>4clip</a>
         <p><span data-l="pt">Switcher de vídeo ao vivo para igrejas. Preview e program, letras, slides e transmissão numa tela só.</span><span data-l="en">Live video switcher for churches. Preview and program, lyrics, slides and streaming on one screen.</span></p>
       </div>
       <nav aria-label="Produto">
@@ -506,7 +506,7 @@ def airo():
         <a href="./#recursos"><span data-l="pt">Recursos</span><span data-l="en">Features</span></a>
         <a href="./#demo"><span data-l="pt">Demonstração</span><span data-l="en">Demo</span></a>
         <a href="./#telas"><span data-l="pt">Telas</span><span data-l="en">Screens</span></a>
-        <a href="./#remoto"><span data-l="pt">Airo Remoto</span><span data-l="en">Airo Remote</span></a>
+        <a href="./#remoto"><span data-l="pt">4clip Remoto</span><span data-l="en">4clip Remote</span></a>
         <a href="./#precos"><span data-l="pt">Preços</span><span data-l="en">Pricing</span></a>
       </nav>
       <nav aria-label="Desenvolvedores">
@@ -514,12 +514,12 @@ def airo():
         <a href="#comecando"><span data-l="pt">Documentação da API</span><span data-l="en">API documentation</span></a>
         <a href="#site-da-igreja"><span data-l="pt">Transmissão no site da igreja</span><span data-l="en">Live stream on your church website</span></a>
         <a href="#webhooks"><span data-l="pt">Webhooks e eventos</span><span data-l="en">Webhooks and events</span></a>
-        <a href="https://github.com/airo-app/airo-app.github.io/releases"><span data-l="pt">Todas as versões</span><span data-l="en">All versions</span></a>
+        <a href="https://github.com/4clip/downloads/releases"><span data-l="pt">Todas as versões</span><span data-l="en">All versions</span></a>
       </nav>
     </div>
-    <div class="foot-bottom"><span>© 2026 Airo</span><span>macOS · Windows · Linux</span></div>
+    <div class="foot-bottom"><span>© 2026 4clip</span><span>macOS · Windows · Linux</span></div>
   </div>
-  <div class="wordmark" aria-hidden="true">airo<i></i></div>
+  <div class="wordmark" aria-hidden="true">fourclip<i></i></div>
 </footer>
 
 <script>
@@ -527,18 +527,18 @@ def airo():
   "use strict";
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var LANG_KEY = "airo-site-lang";
+  var LANG_KEY = "fourclip-site-lang";
 
   /* Textos que não cabem em [data-l]: título da aba, descrição e rótulos de acessibilidade */
   var strings = {
-    pt: { title: "Documentação · Airo", sections: "Seções", language: "Idioma", docs: "Documentação",
+    pt: { title: "Documentação · 4clip", sections: "Seções", language: "Idioma", docs: "Documentação",
           product: "Produto", developers: "Desenvolvedores", anchor: "Link para esta seção",
           copy: "Copiar", copied: "Copiado", copyLabel: "Copiar o código",
-          desc: "Documentação da API do Airo: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja." },
-    en: { title: "Documentation · Airo", sections: "Sections", language: "Language", docs: "Documentation",
+          desc: "Documentação da API do 4clip: HTTP, WebSocket, tokens, webhooks e o guia para mostrar a transmissão no site da igreja." },
+    en: { title: "Documentation · 4clip", sections: "Sections", language: "Language", docs: "Documentation",
           product: "Product", developers: "Developers", anchor: "Link to this section",
           copy: "Copy", copied: "Copied", copyLabel: "Copy the code",
-          desc: "Airo API documentation: HTTP, WebSocket, tokens, webhooks and the guide to show the stream on your church website." }
+          desc: "4clip API documentation: HTTP, WebSocket, tokens, webhooks and the guide to show the stream on your church website." }
   };
   function current() { return document.documentElement.lang === "en" ? "en" : "pt"; }
   function s(key) { return strings[current()][key]; }
